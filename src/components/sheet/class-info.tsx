@@ -1,24 +1,31 @@
-import { CharacterClass, ICharacterSubclass } from "@/types/5e2024/character-class";
+import { characterActions, useCharacter } from "@/store/5e2024/character-store";
+import { CharacterClass } from "@/types/5e2024/character-class";
+import { ICharacterSubclass, loadSublasses } from "@/types/5e2024/character-subclass";
 import { useEffect, useState } from "react";
 
 interface ClassInfoProps {
-    characterClass: CharacterClass;
-    onUpdateClassLevel: (className: string, level: number) => void;
-    onUpdateClassSubclass: (className: string, subclass: ICharacterSubclass) => void;
-    onRemoveClass: (index: number) => void
+  characterClass: CharacterClass;
 }
 
-export default function ClassInfo({
-    characterClass,
-    onUpdateClassLevel,
-    onUpdateClassSubclass,
-    onRemoveClass
-}: ClassInfoProps) {
+export default function ClassInfo({ characterClass }: ClassInfoProps) {
+    const { dispatch } = useCharacter();
     const [availableSubclasses, setAvailableSubclasses] = useState<ICharacterSubclass[]>([]);
 
+    const onUpdateClassLevel = (className: string, level: number) => {
+        dispatch(characterActions.updateClassLevel(className, level));
+    };
+
+    const onUpdateClassSubclass = (subclass: ICharacterSubclass) => {
+        dispatch(characterActions.updateClassSubclass(subclass));
+    };
+
+    const onRemoveClass = (classIndex: number) => {
+        dispatch(characterActions.removeCharacterClass(classIndex));
+    };
+
     useEffect(() => {
-        characterClass.loadSublasses().then(setAvailableSubclasses);
-    }, [characterClass]);
+        loadSublasses(characterClass.name).then(setAvailableSubclasses);
+    }, [characterClass.name]);
 
     return (
         <div className="border border-gray-200 rounded-md p-3 bg-gray-50">
@@ -48,21 +55,20 @@ export default function ClassInfo({
                 <div>
                     <label className="block text-xs font-medium text-gray-700">Subclass</label>
                     <select
-                        value={`${characterClass.subclass ? `${JSON.stringify({ subclassShortname: characterClass.subclass.shortname, subclassSource: characterClass.subclass.source, subclassClassSource: characterClass.subclass.classSource })}` : ''}`}
+                        value={`${characterClass.subclass ? `${JSON.stringify({ shortName: characterClass.subclass.shortName, source: characterClass.subclass.source, classSource: characterClass.subclass.classSource })}` : ''}`}
                         onChange={(e) => {
-                            const { subclassShortname, subclassSource, subclassClassSource } = JSON.parse(e.target.value);
-                            const subclass = availableSubclasses.find(s => s.shortName == subclassShortname && s.source == subclassSource && s.classSource == subclassClassSource);
-                            if (subclass) onUpdateClassSubclass(characterClass.name, subclass);
+                            const { shortName, source, classSource } = JSON.parse(e.target.value);
+                            const subclass = availableSubclasses.find(s => s.shortName == shortName && s.source == source && s.classSource == classSource);
+                            if (subclass) onUpdateClassSubclass(subclass);
                         }}
                         className="mt-1 block w-full px-2 py-1 border border-gray-300 rounded-md text-xs"
                     >
                         <option value="">Select subclass...</option>
                         {availableSubclasses
-                            .filter(sub => sub.className === characterClass.name)
                             .map(sub => (
                                 <option
                                     key={`${sub.shortName}-${sub.source}-${sub.classSource}`}
-                                    value={`${JSON.stringify({ subclassShortname: sub.shortName, subclassSource: sub.source, subclassClassSource: sub.classSource })}`}
+                                    value={`${JSON.stringify({ shortName: sub.shortName, source: sub.source, classSource: sub.classSource })}`}
                                 >
                                     {`${sub.name} (${sub.source}) (${sub.classSource})`}
                                 </option>

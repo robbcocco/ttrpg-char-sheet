@@ -7,42 +7,62 @@ import {
     // itemMastery as itemMasteries
 } from '../../data/items-base.json';
 
-export class CharacterEquip {
+export type CharacterEquip = {
     weapon: CharacterItem;
     armor: CharacterItem;
 }
 
-export class CharacterItem {
-    constructor(item: ICharacterWeapon | ICharacterArmor) {
-        this.name = item.name;
-        this.source = item.source;
-        if ((item as ICharacterWeapon).weapon) {
-            this.dmg1 = (item as ICharacterWeapon).dmg1;
-            this.dmgType = (item as ICharacterWeapon).dmgType;
-            this.dmg2 = (item as ICharacterWeapon).dmg2;
-            this.weapon = true;
-        } else if ((item as ICharacterArmor).armor) {
-            this.ac = (item as ICharacterArmor).ac;
-            this.armor = true;
-        }
-    }
+export const initCharacterEquip = (equip?: CharacterEquip) => { return {
+    weapon: equip?.weapon ?? initCharacterItem(),
+    armor: equip?.armor ?? initCharacterItem()
+}}
 
+export type CharacterItem = {
     name: string;
     source: string;
+    type?: 'weapon' | 'armor';
     dmg1?: string;
     dmgType?: string;
     dmg2?: string;
     ac?: number;
-    weapon?: boolean;
-    armor?: boolean;
+}
 
-    static loadWeapons(): ICharacterWeapon[] {
-        return items.filter(item => item.weapon).map(item => item as ICharacterWeapon);
+export const initCharacterItem = (item?: ICharacterWeapon | ICharacterArmor | CharacterItem): CharacterItem => {
+    if (item && 'weapon' in item) {
+        return {
+            name: item.name,
+            source: item.source,
+            dmg1: item.dmg1,
+            dmgType: item.dmgType,
+            dmg2: item.dmg2,
+            type: 'weapon'
+        }
+    } else if (item && 'armor' in item) {
+        return {
+            name: item.name,
+            source: item.source,
+            ac: item.ac,
+            type: 'armor'
+        }
+    } else {
+        return {
+            name: item?.name ?? '',
+            source: item?.source ?? '',
+            dmg1: item?.dmg1 ?? '',
+            dmgType: item?.dmgType ?? '',
+            dmg2: item?.dmg2 ?? '',
+            ac: item?.ac ?? 0,
+            type: item?.type
+        }
     }
+}
 
-    static loadArmors(): ICharacterArmor[] {
-        return items.filter(item => item.armor).map(item => item as ICharacterArmor);
-    }
+export const loadWeapons = (): ICharacterWeapon[] => {
+    return items.filter(item => item.weapon).map(item => item as ICharacterWeapon);
+}
+
+export const loadArmors = (): ICharacterArmor[] => {
+    return items.filter(item => item.armor).map(item => item as ICharacterArmor);
 }
 
 export interface ICharacterWeapon {

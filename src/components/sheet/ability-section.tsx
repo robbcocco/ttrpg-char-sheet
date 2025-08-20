@@ -1,22 +1,31 @@
-import { CharacterAbilityScore, AbilityKey } from "@/types/5e2024/character-ability-score";
-import { CharacterSkill } from "@/types/5e2024/character-skill";
-import { formatModifier } from "@/utils/dice";
+import { CharacterAbilityScore, AbilityKey, CharacterAbilityModifier, CharacterAbilitySavingThrow } from "@/types/5e2024/character-ability-score";
+import { CharacterSkillScore } from "@/types/5e2024/character-skill";
+import { useCharacterSkills, useCharacter, useCharacterInfo, useCharacterAbilityScores, characterActions } from '@/store/5e2024/character-store';
+import { formatModifier } from "@/utils";
 
 interface AbilitySectionProps {
   abilityScore: CharacterAbilityScore;
-  skills: CharacterSkill[];
-  onUpdateAbility: (abilityKey: AbilityKey, value: number) => void;
-  onToggleSavingThrow: (abilityKey: string) => void;
-  onToggleSkillProficiency: (skillName: string) => void;
 }
 
-export default function AbilitySection({ 
-  abilityScore, 
-  skills, 
-  onUpdateAbility, 
-  onToggleSavingThrow, 
-  onToggleSkillProficiency 
-}: AbilitySectionProps) {
+export default function AbilitySection({ abilityScore }: AbilitySectionProps) {
+  const skills = useCharacterSkills();
+  const characterInfo = useCharacterInfo();
+  const abilityScores = useCharacterAbilityScores();
+  const { dispatch } = useCharacter();
+
+  // Action handlers
+  const onUpdateAbility = (abilityKey: AbilityKey, value: number) => {
+    dispatch(characterActions.updateAbilityScore(abilityKey, value));
+  };
+
+  const onToggleSavingThrow = (key: string) => {
+    dispatch(characterActions.toggleSavingThrowProficiency(key));
+  };
+
+  const onToggleSkillProficiency = (skillName: string) => {
+    dispatch(characterActions.toggleSkillProficiency(skillName));
+  };
+
   const handleAbilityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseInt(e.target.value) || 10;
     onUpdateAbility(abilityScore.key, value);
@@ -46,7 +55,7 @@ export default function AbilitySection({
           <div className="text-center">
             <div className="text-xs text-gray-500">Modifier</div>
             <div className="text-lg font-bold">
-              {formatModifier(abilityScore.modifier())}
+              {formatModifier(CharacterAbilityModifier(abilityScore))}
             </div>
           </div>
         </div>
@@ -65,7 +74,7 @@ export default function AbilitySection({
             />
             <span className="text-sm capitalize">{abilityScore.name}</span>
           </div>
-          <span className="font-medium">{formatModifier(abilityScore.savingThrow())}</span>
+          <span className="font-medium">{formatModifier(CharacterAbilitySavingThrow({ score: abilityScore, info: characterInfo }))}</span>
         </div>
       </div>
 
@@ -85,7 +94,7 @@ export default function AbilitySection({
                   />
                   <span className="text-sm">{skill.name}</span>
                 </div>
-                <span className="font-medium">{formatModifier(skill.score())}</span>
+                <span className="font-medium">{formatModifier(CharacterSkillScore({ skill, abilityScores, info: characterInfo }))}</span>
               </div>
             ))}
           </div>

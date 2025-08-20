@@ -1,85 +1,55 @@
 import index from '../../data/class/index.json';
 import { AbilityKey } from './character-ability-score';
+import { CharacterSubclass } from './character-subclass';
 
-export class CharacterClass {
-    constructor(characterClass: ICharacterClass) {
-        this.name = characterClass.name;
-        this.source = characterClass.source;
-        this.level = 1;
-        this.spellcastingAbility = characterClass.spellcastingAbility as AbilityKey;
-    }
-
+export type CharacterClass = {
     name: string;
     source: string;
     level: number;
-    spellcastingAbility: AbilityKey;
+    spellcastingAbility?: AbilityKey;
+    subclass?: CharacterSubclass;
+}
 
-    subclass: CharacterSubclass;
-
-    static loadClasses = async (): Promise<ICharacterClass[]> => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const classes: any[] = [];
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        for (const [key, value] of Object.entries(index)) {
-            const temp = await import(`../../data/class/${value}`);
-            classes.push(temp.class.filter((c: { source: string; }) => c.source == 'XPHB'));
+export const initCharacterClass = (characterClass: ICharacterClass | CharacterClass): CharacterClass => {
+    if (characterClass && 'page' in characterClass) {
+        return {
+            name: characterClass.name,
+            source: characterClass.source,
+            level: 1,
+            spellcastingAbility: characterClass.spellcastingAbility as AbilityKey
         }
-
-        return classes.flat();
-    }
-
-    loadSublasses = async (): Promise<ICharacterSubclass[]> => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const subclasses: any[] = [];
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        for (const [key, value] of Object.entries(index)) {
-            const temp = await import(`../../data/class/${value}`);
-            // Check if subclass exists and is an array before filtering
-            if (temp.subclass && Array.isArray(temp.subclass)) {
-                subclasses.push(temp.subclass.filter((c: { className: string, source: string; }) => (c.className == this.name)));
-            }
+    } else {
+        return {
+            name: characterClass?.name ?? '',
+            source: characterClass?.source ?? '',
+            level: characterClass?.level ?? 1,
+            spellcastingAbility: characterClass.spellcastingAbility
         }
-
-        return subclasses.flat().sort((a, b) => a.name.localeCompare(b.name));
-    }
-
-    loadClassFeatures = async (): Promise<ICharacterClassFeature[]> => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const features: any[] = [];
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        for (const [key, value] of Object.entries(index)) {
-            const temp = await import(`../../data/class/${value}`);
-            features.push(temp.classFeature.filter((c: { className: string, source: string; }) => (c.className == this.name && c.source == 'XPHB')));
-        }
-
-        return features.flat().sort((a, b) => a.name.localeCompare(b.name));
-    }
-
-    loadSublassFeatures = async (): Promise<ICharacterSubclassFeature[]> => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const features: any[] = [];
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        for (const [key, value] of Object.entries(index)) {
-            const temp = await import(`../../data/class/${value}`);
-            features.push(temp.subclassFeature.filter((c: { subclassShortName: string, source: string; }) => (c.subclassShortName == this.subclass.shortname)));
-        }
-
-        return features.flat().sort((a, b) => a.name.localeCompare(b.name));
     }
 }
 
-export class CharacterSubclass {
-    constructor(characterSubclass: ICharacterSubclass) {
-        this.name = characterSubclass.name;
-        this.source = characterSubclass.source;
-        this.classSource = characterSubclass.source;
-        this.shortname = characterSubclass.shortName;
+export const loadClasses = async (): Promise<ICharacterClass[]> => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const classes: any[] = [];
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    for (const [key, value] of Object.entries(index)) {
+        const temp = await import(`../../data/class/${value}`);
+        classes.push(temp.class.filter((c: { source: string; }) => c.source == 'XPHB'));
     }
 
-    name: string;
-    shortname: string;
-    source: string;
-    classSource: string;
+    return classes.flat();
+}
+
+export const loadClassFeatures = async (className: string): Promise<ICharacterClassFeature[]> => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const features: any[] = [];
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    for (const [key, value] of Object.entries(index)) {
+        const temp = await import(`../../data/class/${value}`);
+        features.push(temp.classFeature.filter((c: { className: string, source: string; }) => (c.className == className && c.source == 'XPHB')));
+    }
+
+    return features.flat().sort((a, b) => a.name.localeCompare(b.name));
 }
 
 export interface ICharacterClass {
@@ -121,27 +91,6 @@ export interface ICharacterClass {
     featProgression?: undefined;
 }
 
-export interface ICharacterSubclass {
-    name: string;
-    shortName: string;
-    source: string;
-    className: string;
-    classSource: string;
-    page: number;
-    reprintedAs: string[];
-    edition: string;
-    subclassFeatures: string[];
-    srd?: undefined;
-    basicRules?: undefined;
-    additionalSpells?: undefined;
-    hasFluff?: undefined;
-    hasFluffImages?: undefined;
-    fluff?: undefined;
-    otherSources?: undefined;
-    srd52?: undefined;
-    basicRules2024?: undefined;
-}
-
 export interface ICharacterClassFeature {
     name: string;
     source: string;
@@ -160,26 +109,4 @@ export interface ICharacterClassFeature {
             attributes: string[];
         })[];
     })
-}
-
-export interface ICharacterSubclassFeature {
-    name: string;
-    source: string;
-    page: number;
-    className: string;
-    classSource: string;
-    subclassShortName: string;
-    subclassSource: string;
-    level: number;
-    entries: (string | {
-        type: string;
-        subclassFeature: string;
-    })[];
-    header?: undefined;
-    srd?: undefined;
-    basicRules?: undefined;
-    otherSources?: undefined;
-    type?: undefined;
-    srd52?: undefined;
-    basicRules2024?: undefined;
 }

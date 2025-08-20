@@ -1,27 +1,19 @@
-import { Character } from "@/types/5e2024/character";
 import ClassInfo from "./class-info";
-import { CharacterClass, ICharacterClass, ICharacterSubclass } from "@/types/5e2024/character-class";
+import { ICharacterClass, loadClasses } from "@/types/5e2024/character-class";
 import { useEffect, useState } from "react";
+import { characterActions, useCharacter, useCharacterClasses } from "@/store/5e2024/character-store";
 
-interface ClassesSectionProps {
-    character: Character;
-    onAddClass: (classData: ICharacterClass) => void;
-    onUpdateClassLevel: (className: string, level: number) => void;
-    onUpdateClassSubclass: (className: string, subclass: ICharacterSubclass) => void;
-    onRemoveClass: (classIndex: number) => void;
-}
-
-export default function ClassesSection({
-    character,
-    onAddClass,
-    onUpdateClassLevel,
-    onUpdateClassSubclass,
-    onRemoveClass,
-}: ClassesSectionProps) {
+export default function ClassesSection() {
+    const characterClasses = useCharacterClasses();
+    const { dispatch } = useCharacter();
     const [availableClasses, setAvailableClasses] = useState<ICharacterClass[]>([]);
 
+    const onAddClass = (classData: ICharacterClass) => {
+        dispatch(characterActions.addCharacterClass(classData));
+    };
+
     useEffect(() => {
-        CharacterClass.loadClasses().then(setAvailableClasses);
+        loadClasses().then(setAvailableClasses);
     }, []);
 
     return (
@@ -35,7 +27,7 @@ export default function ClassesSection({
                         if (e.target.value) {
                             const classData = availableClasses.find(c => c.name === e.target.value);
                             if (classData) {
-                            onAddClass(classData)
+                                onAddClass(classData)
                             }
                         }
                     }}
@@ -51,13 +43,10 @@ export default function ClassesSection({
 
             {/* Current Classes */}
             <div className="space-y-3">
-                {character.info.classes.map((characterClass, index) => (
+                {characterClasses.map((characterClass, index) => (
                     <ClassInfo
                         key={index}
                         characterClass={characterClass}
-                        onUpdateClassLevel={onUpdateClassLevel}
-                        onUpdateClassSubclass={onUpdateClassSubclass}
-                        onRemoveClass={() => onRemoveClass(index)}
                     />
                 ))}
             </div>

@@ -1,18 +1,23 @@
-import { Character } from "@/types/5e2024/character";
-import { CharacterSpell, ICharacterSpell } from "@/types/5e2024/character-spell";
+import { characterActions, useCharacter, useCharacterClasses, useCharacterSpells } from "@/store/5e2024/character-store";
+import { ICharacterSpell, loadSpells } from "@/types/5e2024/character-spell";
 import { useEffect, useState } from "react";
 
-interface SpellsSectionProps {
-  character: Character;
-  onAddSpell: (spell: ICharacterSpell) => void;
-  onRemoveSpell: (spellIndex: number) => void;
-}
-
-export default function SpellsSection({ character, onAddSpell, onRemoveSpell }: SpellsSectionProps) {
+export default function SpellsSection() {
+  const characterClasses = useCharacterClasses();
+  const characterSpells = useCharacterSpells();
+  const { dispatch } = useCharacter();
   const [availableSpells, setAvailableSpells] = useState<ICharacterSpell[]>([]);
 
+  const onAddSpell = (spellData: ICharacterSpell) => {
+    dispatch(characterActions.addSpell(spellData));
+  };
+
+  const onRemoveSpell = (index: number) => {
+    dispatch(characterActions.removeSpell(index));
+  };
+
   useEffect(() => {
-    CharacterSpell.loadSpells().then(setAvailableSpells);
+    loadSpells().then(setAvailableSpells);
   }, []);
 
   return (
@@ -22,7 +27,7 @@ export default function SpellsSection({ character, onAddSpell, onRemoveSpell }: 
       {/* Spellcasting Info */}
       <div className="mb-4 p-3 bg-gray-50 rounded-md">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {character.info.classes.map((characterClass, index) => (
+          {characterClasses.map((characterClass, index) => (
             characterClass.spellcastingAbility && (
               <div key={index}>
                 <span className="text-sm font-medium text-gray-700">
@@ -62,10 +67,10 @@ export default function SpellsSection({ character, onAddSpell, onRemoveSpell }: 
 
       {/* Current Spells */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {character.spells.length === 0 ? (
+        {characterSpells.length === 0 ? (
           <p className="text-gray-500 col-span-2">No spells selected</p>
         ) : (
-          character.spells.map((spell, index) => (
+          characterSpells.map((spell, index) => (
             <div key={index} className="border border-gray-200 rounded-md p-3">
               <div className="flex justify-between items-start mb-2">
                 <h3 className="font-medium">{spell.name}</h3>

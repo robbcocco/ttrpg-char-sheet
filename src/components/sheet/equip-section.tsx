@@ -1,20 +1,24 @@
-import { Character } from "@/types/5e2024/character";
-import { CharacterItem, ICharacterArmor, ICharacterWeapon } from "@/types/5e2024/character-equip";
+import { characterActions, useCharacter, useCharacterEquip } from "@/store/5e2024/character-store";
+import { ICharacterArmor, ICharacterWeapon, loadArmors, loadWeapons } from "@/types/5e2024/character-equip";
 import { useEffect, useState } from "react";
 
-interface EquipSectionProps {
-    character: Character;
-    onUpdateWeapon: (item: ICharacterWeapon) => void;
-    onUpdateArmor: (item: ICharacterArmor) => void;
-}
-
-export default function EquipSection({ character, onUpdateWeapon, onUpdateArmor }: EquipSectionProps) {
+export default function EquipSection() {
+    const characterEquip = useCharacterEquip();
+    const { dispatch } = useCharacter();
     const [availableWeapons, setAvailableWeapons] = useState<ICharacterWeapon[]>([]);
     const [availableArmors, setAvailableArmors] = useState<ICharacterArmor[]>([]);
 
+    const onUpdateWeapon = (weaponData: ICharacterWeapon) => {
+        dispatch(characterActions.updateCharacterWeapon(weaponData));
+    };
+
+    const onUpdateArmor = (armorData: ICharacterArmor) => {
+        dispatch(characterActions.updateCharacterArmor(armorData));
+    };
+
     useEffect(() => {
-        setAvailableWeapons(CharacterItem.loadWeapons());
-        setAvailableArmors(CharacterItem.loadArmors());
+        setAvailableWeapons(loadWeapons());
+        setAvailableArmors(loadArmors());
     }, []);
 
     return (
@@ -25,7 +29,7 @@ export default function EquipSection({ character, onUpdateWeapon, onUpdateArmor 
             <div>
                 <label className="block text-sm font-medium text-gray-700">Weapon</label>
                 <select
-                    value={`${character.equip?.weapon ? `${JSON.stringify({ backgroundName: character.equip.weapon.name, backgroundSource: character.equip.weapon.source })}` : ''}`}
+                    value={`${characterEquip?.weapon ? `${JSON.stringify({ backgroundName: characterEquip.weapon.name, backgroundSource: characterEquip.weapon.source })}` : ''}`}
                     onChange={(e) => {
                         const { backgroundName, backgroundSource } = JSON.parse(e.target.value);
                         const newBackground = availableWeapons.find(bg => bg.name == backgroundName && bg.source == backgroundSource);
@@ -44,7 +48,7 @@ export default function EquipSection({ character, onUpdateWeapon, onUpdateArmor 
             <div>
                 <label className="block text-sm font-medium text-gray-700">Armor</label>
                 <select
-                    value={`${character.equip?.armor ? `${JSON.stringify({ backgroundName: character.equip.armor.name, backgroundSource: character.equip.armor.source })}` : ''}`}
+                    value={`${characterEquip?.armor ? `${JSON.stringify({ backgroundName: characterEquip.armor.name, backgroundSource: characterEquip.armor.source })}` : ''}`}
                     onChange={(e) => {
                         const { backgroundName, backgroundSource } = JSON.parse(e.target.value);
                         const newBackground = availableArmors.find(bg => bg.name == backgroundName && bg.source == backgroundSource);

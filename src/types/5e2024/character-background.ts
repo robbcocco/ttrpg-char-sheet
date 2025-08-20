@@ -1,27 +1,38 @@
 import { normalizeEntriesToText } from "@/utils/json";
 import { background as backgrounds } from '../../data/backgrounds.json';
 
-export class CharacterBackground {
-    constructor(
-        background: Partial<ICharacterBackground>
-    ) {
-        this.name = background.name ?? '';
-        this.source = background.source ?? '';
-        this.description = background.entries ? normalizeEntriesToText<ICharacterBackground['entries']>(background.entries) : '';
-        this.proficiencies = [];
-    }
-
+export type CharacterBackground = {
     name: string;
     source: string;
     description: string;
     ability: string;
     proficiencies: string[];
+}
 
-    static loadBackgrounds(): Partial<ICharacterBackground>[] {
-        return backgrounds
-            // .filter(background => background.source == 'XPHB')
-            .sort((a, b) => a.name.localeCompare(b.name));
+export const initCharacterBackground = (background?: ICharacterBackground | CharacterBackground): CharacterBackground => {
+    if (background && 'page' in background) {
+        return {
+            name: background.name ?? '',
+            source: background.source ?? '',
+            description: background.entries ? normalizeEntriesToText<ICharacterBackground['entries']>(background.entries) : '',
+            ability: '',
+            proficiencies: []
+        }
+    } else {
+        return {
+            name: background?.name ?? '',
+            source: background?.source ?? '',
+            description: background?.description ?? '',
+            ability: '',
+            proficiencies: []
+        }
     }
+}
+
+export const loadBackgrounds = (): Partial<ICharacterBackground>[] => {
+    return backgrounds
+        // .filter(background => background.source == 'XPHB')
+        .sort((a, b) => a.name.localeCompare(b.name));
 }
 
 export interface ICharacterBackground {

@@ -1,51 +1,61 @@
 import { normalizeEntriesToText } from "@/utils/json";
 import { skill as skills } from '../../data/skills.json';
+import { AbilityKey, CharacterAbilityModifier, CharacterAbilityScore } from "./character-ability-score";
+import { CharacterInfo } from "./character-info";
 
-export class CharacterSkill {
-    constructor(
-        skill: ICharacterSkillA | ICharacterSkillB
-    ) {
-        this.name = skill.name;
-        this.ability = skill.ability;
-        this.description = normalizeEntriesToText<ICharacterSkillA['entries'] | ICharacterSkillB['entries']>(skill.entries);
-        this.proficient = false;
-        this.score = () => 0;
-    }
-
+export type CharacterSkill = {
     name: string;
+    source: string;
     description: string;
-    ability: string;
+    ability: AbilityKey;
     proficient: boolean;
-    score: () => number;
+}
 
-    static loadSkills(): (ICharacterSkillA | ICharacterSkillB)[] {
-        return skills.filter(skill => skill.source == 'XPHB');
+export const initCharacterSkill = (skill?: ICharacterSkill | CharacterSkill): CharacterSkill => {
+    if (skill && 'page' in skill) {
+        return {
+            name: skill.name,
+            source: skill.source,
+            ability: skill.ability as AbilityKey,
+            description: normalizeEntriesToText<ICharacterSkill['entries']>(skill.entries),
+            proficient: false,
+        }
+    } else {
+        return {
+            name: skill?.name ?? '',
+            source: skill?.source ?? '',
+            description: skill?.description ?? '',
+            ability: skill?.ability ?? 'str',
+            proficient: skill?.proficient ?? false
+        }
     }
 }
 
-export interface ICharacterSkillA {
-    name: string;
-    source: string;
-    page: number;
-    srd52: boolean;
-    ability: string;
-    entries: string[];
-    srd?: undefined;
-    basicRules?: undefined;
-    reprintedAs?: undefined;
+export const CharacterSkillScore = ({
+    skill,
+    abilityScores,
+    info
+}: { skill: CharacterSkill, abilityScores: CharacterAbilityScore[], info: CharacterInfo }) => {
+    const score = abilityScores.find(score => score.key == skill.ability);
+    if (!score) {
+        return 0;
+    }
+    return skill.proficient ? CharacterAbilityModifier(score) + Number(info.proficiencyBonus) : CharacterAbilityModifier(score);
 }
 
-export interface ICharacterSkillB {
+
+export const loadSkills = (): (ICharacterSkill)[] => {
+    return skills.filter(skill => skill.source == 'XPHB');
+}
+
+export interface ICharacterSkill {
     name: string;
     source: string;
     page: number;
-    srd: boolean;
-    basicRules: boolean;
-    reprintedAs: string[];
     ability: string;
     entries: (string | {
         type: string;
         items: string[];
     })[];
-    srd52?: undefined;
+    basicRules?: boolean;
 }
