@@ -1,3 +1,4 @@
+import { reduceDices } from '@/utils/dice';
 import { AbilityName, AbilityKey, CharacterAbilityScore, initCharacterAbilityScore, CharacterAbilityModifier } from './character-ability-score';
 import { CharacterBackground } from './character-background';
 import { CharacterClass } from './character-class';
@@ -7,48 +8,6 @@ import { CharacterSkill, initCharacterSkill, loadSkills } from './character-skil
 import { CharacterSpell } from './character-spell';
 
 export type Character = {
-    // constructor() {
-    //     // eslint-disable-next-line @typescript-eslint/no-this-alias
-    //     const that = this;
-
-    //     this.info = new CharacterInfo()
-
-    //     // Init array
-    //     this.abilityScores = [];
-    //     this.skills = [];
-    //     const abilities: Array<[AbilityName, AbilityKey]> = [
-    //         ['strength', 'str'],
-    //         ['dexterity', 'dex'],
-    //         ['constitution', 'con'],
-    //         ['intelligence', 'int'],
-    //         ['wisdom', 'wis'],
-    //         ['charisma', 'cha']
-    //     ];
-
-    //     for (const ability of abilities) {
-    //         const ab = new CharacterAbilityScore(ability[0], ability[1])
-    //         ab.savingThrow = function (): number {
-    //             return this.savingThrowProficient ? this.modifier() + Number(that.info.proficiencyBonus) : this.modifier();
-    //         };
-    //         this.abilityScores.push(ab);
-    //     }
-
-    //     for (const skill of CharacterSkill.loadSkills()) {
-    //         const sk = new CharacterSkill(skill);
-
-    //         // 2) Replace the score function so it can close over *this* Character and the skill instance
-    //         sk.score = function (): number {
-    //             const base =
-    //                 that.abilityScores.find((a) => a.key === (sk.ability as AbilityKey))?.modifier() ?? 0;
-    //             return this.proficient ? base + Number(that.info.proficiencyBonus) : base;
-    //         };
-
-    //         this.skills.push(sk);
-    //     }
-
-    //     this.spells = [];
-    // }
-
     info: CharacterInfo
 
     background?: CharacterBackground;
@@ -64,20 +23,100 @@ export type Character = {
     equip: CharacterEquip;
 }
 
-export const initChatacter = (character?: Character): Character => { return {
-    info: character?.info ?? initCharacterInfo(),
-    background: character?.background ?? undefined,
-    classes: character?.classes ?? [],
-    abilityScores: character?.abilityScores ?? abilities.map(ability => initCharacterAbilityScore(ability)),
-    skills: loadSkills().map(skill => initCharacterSkill(skill)),
-    spells: [],
-    equip: initCharacterEquip()
-}}
+export const initCharacter = (character?: Character): Character => {
+    const proficiencies = CharacterAbilityProficiency(character);
+    
+    return {
+        info: character?.info ?? initCharacterInfo(),
+        background: character?.background ?? undefined,
+        classes: character?.classes ?? [],
+        abilityScores: (character?.abilityScores?.length ?? 0) > 0 
+            ? character!.abilityScores.map(ability => {
+                return initCharacterAbilityScore(ability, proficiencies);
+            })
+            : abilities.map(ability => {
+                return initCharacterAbilityScore(ability, proficiencies);
+            }),
+        skills: loadSkills().map(skill => initCharacterSkill(skill)),
+        spells: [],
+        equip: initCharacterEquip()
+    }
+}
 
-export const CharacterInitiative = (character: Character) => {
+export const CharacterInitiative = (character: Character): number => {
     const dexterity = character.abilityScores.find(a => a.key === 'dex');
     return dexterity ? CharacterAbilityModifier(dexterity) : 0;
 }
+
+export const CharacterArmorClass = (character: Character): number => {
+    const baseAC = 10;
+    let armorClass;
+
+    const dexterity = character.abilityScores.find(a => a.key === 'dex');
+    const dexModifier = CharacterAbilityModifier(dexterity);
+
+    const armor = character.equip?.armor;
+    if (armor?.ac) {
+        const isHeavy = armor.armorType == 'Heavy';
+        const isMedium = armor.armorType == 'Medium';
+        if (isHeavy) {
+            armorClass = baseAC + armor.ac;
+        } else if (isMedium) {
+            armorClass = baseAC + armor.ac + Math.min(dexModifier, 2);
+        } else {
+            armorClass = baseAC + armor.ac + dexModifier;
+        }
+    } else {
+        armorClass = dexterity ? baseAC + dexModifier : baseAC;
+    }
+
+    const shield = character.equip?.shield;
+    if (shield?.ac) {
+        armorClass += shield.ac;
+    }
+
+    return armorClass;
+}
+
+export const CharacterHitPoints = (character: Character): number => {
+    let baseHitPoints = 0;
+
+    const constitution = character.abilityScores.find(a => a.key === 'con');
+    const conModifier = CharacterAbilityModifier(constitution);
+    const classesHealthDices = reduceDices(character.classes.map(({ level, healthDice }) => ({
+        number: level,
+        faces: healthDice
+    })));
+
+    for (let i = 0; i < classesHealthDices.length; i++) {
+        const { faces } = classesHealthDices[i];
+
+        if (i == 0) {
+            baseHitPoints += faces + conModifier;
+        } else {
+            baseHitPoints += (faces / 2) + 1 + conModifier;
+        }
+    }
+
+    return baseHitPoints;
+}
+
+export const CharacterAbilityProficiency = (character?: Character): AbilityKey[] => {
+    const mainClass = character?.classes[0];
+    return mainClass ? mainClass.proficiency : [];
+}
+
+// export const CharacterSkillProficiency = (character: Character): string[] => {
+//     const [mainClass, ...multiClasses] = character.classes;
+//     if (mainClass) {
+//         let skillProficiencies: string[] = [];
+
+
+//         return skillProficiencies;
+//     } else {
+//         return []
+//     }
+// }
 
 const abilities: Array<[AbilityName, AbilityKey]> = [
     ['strength', 'str'],

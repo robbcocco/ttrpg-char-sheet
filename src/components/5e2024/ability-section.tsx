@@ -2,6 +2,7 @@ import { CharacterAbilityScore, AbilityKey, CharacterAbilityModifier, CharacterA
 import { CharacterSkillScore } from "@/types/5e2024/character-skill";
 import { useCharacterSkills, useCharacter, useCharacterInfo, useCharacterAbilityScores, characterActions } from '@/store/5e2024/character-store';
 import { formatModifier } from "@/utils";
+import DiceRoller from "../commons/dice-roller";
 
 interface AbilitySectionProps {
   abilityScore: CharacterAbilityScore;
@@ -41,7 +42,7 @@ export default function AbilitySection({ abilityScore }: AbilitySectionProps) {
         <h3 className="text-lg font-bold text-gray-800 capitalize mb-2">
           {abilityScore.name}
         </h3>
-        
+
         {/* Ability Score Input */}
         <div className="flex items-center justify-center space-x-4 mb-2">
           <input
@@ -52,12 +53,14 @@ export default function AbilitySection({ abilityScore }: AbilitySectionProps) {
             onChange={handleAbilityChange}
             className="w-16 text-center text-xl font-bold border-2 border-gray-300 rounded-md py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
-          <div className="text-center">
-            <div className="text-xs text-gray-500">Modifier</div>
-            <div className="text-lg font-bold">
-              {formatModifier(CharacterAbilityModifier(abilityScore))}
+          <DiceRoller dices={[{ number: 1, faces: 20, bonus: CharacterAbilityModifier(abilityScore) }]}>
+            <div className="text-center">
+              <div className="text-xs text-gray-500">Modifier</div>
+              <div className="text-lg font-bold">
+                {formatModifier(CharacterAbilityModifier(abilityScore))}
+              </div>
             </div>
-          </div>
+          </DiceRoller>
         </div>
       </div>
 

@@ -7,25 +7,27 @@ export type CharacterAbilityScore = {
     savingThrowProficient: boolean;
 }
 
-export const initCharacterAbilityScore = (score?: CharacterAbilityScore | [AbilityName, AbilityKey]): CharacterAbilityScore => {
+export const initCharacterAbilityScore = (score?: CharacterAbilityScore | [AbilityName, AbilityKey], proficiencies: AbilityKey[] = []): CharacterAbilityScore => {
     if (score && !('name' in score)) {
         return {
             name: score[0],
             key: score[1],
             value: 10,
-            savingThrowProficient: false
+            savingThrowProficient: proficiencies.includes(score[1])
         }
     } else {
+        const key = score?.key ?? 'str';
+        const isProficient = proficiencies.includes(key);
         return {
             name: score?.name ?? 'strength',
-            key: score?.key ?? 'str',
+            key: key,
             value: score?.value ?? 10,
-            savingThrowProficient: score?.savingThrowProficient ?? false,
+            savingThrowProficient: isProficient,
         }
     }
 }
 
-export const CharacterAbilityModifier = (score: CharacterAbilityScore) => Math.floor((score.value - 10) / 2);
+export const CharacterAbilityModifier = (score?: CharacterAbilityScore) => score ? Math.floor((score.value - 10) / 2) : 0;
 
 export const CharacterAbilitySavingThrow = ({
     score,

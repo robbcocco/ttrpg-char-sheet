@@ -28,6 +28,7 @@ export default function ClassesSection() {
                             const classData = availableClasses.find(c => c.name === e.target.value);
                             if (classData) {
                                 onAddClass(classData)
+                                e.target.value = '';
                             }
                         }
                     }}

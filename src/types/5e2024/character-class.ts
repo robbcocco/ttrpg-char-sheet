@@ -6,6 +6,10 @@ export type CharacterClass = {
     name: string;
     source: string;
     level: number;
+    healthDice: number;
+    proficiency: AbilityKey[];
+    startingProficiencies: CharacterProficiency;
+    multiclassProficiencies: CharacterProficiency;
     spellcastingAbility?: AbilityKey;
     subclass?: CharacterSubclass;
 }
@@ -16,6 +20,10 @@ export const initCharacterClass = (characterClass: ICharacterClass | CharacterCl
             name: characterClass.name,
             source: characterClass.source,
             level: 1,
+            healthDice: characterClass.hd.faces,
+            proficiency: characterClass.proficiency,
+            startingProficiencies: initCharacterProficiency(characterClass.startingProficiencies),
+            multiclassProficiencies: initCharacterProficiency(characterClass.multiclassing.proficienciesGained),
             spellcastingAbility: characterClass.spellcastingAbility as AbilityKey
         }
     } else {
@@ -23,8 +31,31 @@ export const initCharacterClass = (characterClass: ICharacterClass | CharacterCl
             name: characterClass?.name ?? '',
             source: characterClass?.source ?? '',
             level: characterClass?.level ?? 1,
+            healthDice: characterClass?.healthDice ?? 6,
+            proficiency: characterClass?.proficiency ?? [],
+            startingProficiencies: characterClass?.startingProficiencies,
+            multiclassProficiencies: characterClass?.multiclassProficiencies,
             spellcastingAbility: characterClass.spellcastingAbility
         }
+    }
+}
+
+export type CharacterProficiency = {
+    weapons: string[];
+    armor: string[];
+    skills: (string | {
+        choose: {
+            from: string[];
+            count: number;
+        };
+    })[];
+}
+
+export const initCharacterProficiency = (proficiencies?: ICharacterProficiencies | CharacterProficiency): CharacterProficiency => {
+    return {
+        weapons: proficiencies?.weapons || [],
+        armor: proficiencies?.armor || [],
+        skills: proficiencies?.skills || []
     }
 }
 
@@ -64,22 +95,14 @@ export interface ICharacterClass {
         number: number;
         faces: number;
     };
-    proficiency: string[];
+    proficiency: AbilityKey[];
     spellcastingAbility: string;
     casterProgression: string;
     preparedSpells: string;
     cantripProgression: number[];
     spellsKnownProgressionFixed: number[];
     spellsKnownProgressionFixedAllowLowerLevel: boolean;
-    startingProficiencies: {
-        weapons: string[];
-        skills: {
-            choose: {
-                from: string[];
-                count: number;
-            };
-        }[];
-    };
+    startingProficiencies: ICharacterProficiencies;
     startingEquipment: {
         additionalFromBackground: boolean;
         default: string[];
@@ -87,8 +110,21 @@ export interface ICharacterClass {
         defaultData: unknown[];
         entries?: undefined;
     };
-    //missing props
+    multiclassing: {
+        proficienciesGained: ICharacterProficiencies
+    };
     featProgression?: undefined;
+}
+
+export interface ICharacterProficiencies {
+    weapons: string[];
+    armor: string[];
+    skills: (string | {
+        choose: {
+            from: string[];
+            count: number;
+        };
+    })[];
 }
 
 export interface ICharacterClassFeature {

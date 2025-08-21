@@ -1,11 +1,11 @@
 'use client';
 
 import { useCharacter } from '@/store/5e2024/character-store';
-import BasicInfo from '../sheet/basic-info';
-import CombatSection from '../sheet/combat-section';
-import SpellsSection from '../sheet/spells-section';
-import AbilitySection from '../sheet/ability-section';
-import EquipSection from '../sheet/equip-section';
+import BasicInfo from './basic-info';
+import CombatSection from './combat-section';
+import SpellsSection from './spells-section';
+import AbilitySection from './ability-section';
+import EquipSection from './equip-section';
 
 export default function CharacterSheet() {
   const { character } = useCharacter();

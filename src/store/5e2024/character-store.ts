@@ -1,24 +1,25 @@
 'use client';
 
 import React, { createContext, useContext, useReducer, ReactNode } from 'react';
-import { Character, initChatacter } from '@/types/5e2024/character';
+import { Character, initCharacter } from '@/types/5e2024/character';
 import { initCharacterClass, ICharacterClass } from '@/types/5e2024/character-class';
 import { ICharacterSubclass, initCharacterSubclass } from '@/types/5e2024/character-subclass';
 import { initCharacterSpell, ICharacterSpell } from '@/types/5e2024/character-spell';
 import { AbilityKey } from '@/types/5e2024/character-ability-score';
 import { initCharacterBackground, ICharacterBackground } from '@/types/5e2024/character-background';
-import { initCharacterItem, ICharacterArmor, ICharacterWeapon } from '@/types/5e2024/character-equip';
+import { initCharacterItem, ICharacterArmor, ICharacterWeapon, ICharacterShield, CharacterItem } from '@/types/5e2024/character-equip';
 
 // Action types
 export type CharacterAction =
   | { type: 'UPDATE_BASIC_INFO'; field: keyof Character['info']; value: string | number }
-  | { type: 'UPDATE_CHARACTER_BACKGROUND'; background: Partial<ICharacterBackground> }
-  | { type: 'UPDATE_CHARACTER_WEAPON'; weapon: ICharacterWeapon }
-  | { type: 'UPDATE_CHARACTER_ARMOR'; armor: ICharacterArmor }
-  | { type: 'ADD_CHARACTER_CLASS'; classData: ICharacterClass }
+  | { type: 'UPDATE_CHARACTER_BACKGROUND'; background?: Partial<ICharacterBackground> }
+  | { type: 'UPDATE_CHARACTER_WEAPON'; weapon?: ICharacterWeapon }
+  | { type: 'UPDATE_CHARACTER_ARMOR'; armor?: ICharacterArmor }
+  | { type: 'UPDATE_CHARACTER_SHIELD'; shield?: ICharacterShield }
+  | { type: 'ADD_CHARACTER_CLASS'; classData?: ICharacterClass }
   | { type: 'UPDATE_CLASS_LEVEL'; className: string; level: number }
   | { type: 'UPDATE_CLASS_SUBCLASS'; subclass?: ICharacterSubclass }
-  | { type: 'REMOVE_CHARACTER_CLASS'; classIndex: number }
+  | { type: 'REMOVE_CHARACTER_CLASS'; className: string }
   | { type: 'ADD_SPELL'; spellData: ICharacterSpell }
   | { type: 'REMOVE_SPELL'; spellIndex: number }
   | { type: 'UPDATE_ABILITY_SCORE'; abilityKey: AbilityKey; value: number }
@@ -36,48 +37,51 @@ export function characterReducer(state: Character, action: CharacterAction): Cha
       };
 
     case 'UPDATE_CHARACTER_BACKGROUND':
-      if (action.background && action.background.name) {
-        const newBackground = initCharacterBackground(action.background as ICharacterBackground);
-        return {
-          ...state,
-          background: newBackground
-        };
-      }
+      const newBackground = initCharacterBackground(action.background as ICharacterBackground);
+      return {
+        ...state,
+        background: newBackground
+      };
       return state;
 
     case 'UPDATE_CHARACTER_WEAPON':
-      if (action.weapon) {
-        const newWeapon = initCharacterItem(action.weapon);
-        return {
-          ...state,
-          equip: {
-            ...state.equip,
-            weapon: newWeapon
-          }
-        };
-      }
-      return state;
+      const newWeapon = initCharacterItem(action.weapon);
+      return {
+        ...state,
+        equip: {
+          ...state.equip,
+          weapon: newWeapon
+        }
+      };
 
     case 'UPDATE_CHARACTER_ARMOR':
-      if (action.armor) {
-        const newArmor = initCharacterItem(action.armor);
-        return {
-          ...state,
-          equip: {
-            ...state.equip,
-            armor: newArmor
-          }
-        };
-      }
-      return state;
+      const newArmor = initCharacterItem(action.armor);
+      return {
+        ...state,
+        equip: {
+          ...state.equip,
+          armor: newArmor
+        }
+      };
+
+    case 'UPDATE_CHARACTER_SHIELD':
+      const newShield = initCharacterItem(action.shield);
+      return {
+        ...state,
+        equip: {
+          ...state.equip,
+          shield: newShield
+        }
+      };
 
     case 'ADD_CHARACTER_CLASS':
       if (action.classData) {
         const newClass = initCharacterClass(action.classData);
-        return {
+        const refreshChar = initCharacter({
           ...state,
           classes: [...state.classes, newClass]
-        };
+        });
+        return refreshChar;
       }
       return state;
 
@@ -96,8 +100,12 @@ export function characterReducer(state: Character, action: CharacterAction): Cha
       const classesWithSubclass = [...state.classes];
       const classToUpdateSubclass = classesWithSubclass.find(c => c.name === action.subclass?.className);
       if (classToUpdateSubclass) {
-        const newSubclass = initCharacterSubclass(action.subclass);
-        classToUpdateSubclass.subclass = newSubclass;
+        if (action.subclass) {
+          const newSubclass = initCharacterSubclass(action.subclass);
+          classToUpdateSubclass.subclass = newSubclass;
+        } else {
+          classToUpdateSubclass.subclass = undefined;
+        }
       }
       return {
         ...state,
@@ -105,7 +113,7 @@ export function characterReducer(state: Character, action: CharacterAction): Cha
       };
 
     case 'REMOVE_CHARACTER_CLASS':
-      const filteredClasses = state.classes.filter((_, index) => index !== action.classIndex);
+      const filteredClasses = state.classes.filter(c => c.name != action.className);
       return {
         ...state,
         classes: filteredClasses
@@ -194,7 +202,7 @@ export interface CharacterProviderProps {
 }
 
 export function CharacterProvider({ children, initialCharacter }: CharacterProviderProps) {
-  const [character, dispatch] = useReducer(characterReducer, initialCharacter || initChatacter());
+  const [character, dispatch] = useReducer(characterReducer, initialCharacter || initCharacter());
 
   return React.createElement(
     CharacterContext.Provider,
@@ -256,19 +264,24 @@ export const characterActions = {
     value
   }),
 
-  updateCharacterBackground: (background: Partial<ICharacterBackground>): CharacterAction => ({
+  updateCharacterBackground: (background?: Partial<ICharacterBackground>): CharacterAction => ({
     type: 'UPDATE_CHARACTER_BACKGROUND',
     background
   }),
 
-  updateCharacterWeapon: (weapon: ICharacterWeapon): CharacterAction => ({
+  updateCharacterWeapon: (weapon?: ICharacterWeapon): CharacterAction => ({
     type: 'UPDATE_CHARACTER_WEAPON',
     weapon
   }),
 
-  updateCharacterArmor: (armor: ICharacterArmor): CharacterAction => ({
+  updateCharacterArmor: (armor?: ICharacterArmor): CharacterAction => ({
     type: 'UPDATE_CHARACTER_ARMOR',
     armor
+  }),
+
+  updateCharacterShield: (shield?: ICharacterShield): CharacterAction => ({
+    type: 'UPDATE_CHARACTER_SHIELD',
+    shield
   }),
 
   addCharacterClass: (classData: ICharacterClass): CharacterAction => ({
@@ -287,9 +300,9 @@ export const characterActions = {
     subclass
   }),
 
-  removeCharacterClass: (classIndex: number): CharacterAction => ({
+  removeCharacterClass: (className: string): CharacterAction => ({
     type: 'REMOVE_CHARACTER_CLASS',
-    classIndex
+    className
   }),
 
   addSpell: (spellData: ICharacterSpell): CharacterAction => ({

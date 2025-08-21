@@ -4,7 +4,7 @@ import { ICharacterSubclass, loadSublasses } from "@/types/5e2024/character-subc
 import { useEffect, useState } from "react";
 
 interface ClassInfoProps {
-  characterClass: CharacterClass;
+    characterClass: CharacterClass;
 }
 
 export default function ClassInfo({ characterClass }: ClassInfoProps) {
@@ -15,12 +15,12 @@ export default function ClassInfo({ characterClass }: ClassInfoProps) {
         dispatch(characterActions.updateClassLevel(className, level));
     };
 
-    const onUpdateClassSubclass = (subclass: ICharacterSubclass) => {
+    const onUpdateClassSubclass = (subclass?: ICharacterSubclass) => {
         dispatch(characterActions.updateClassSubclass(subclass));
     };
 
-    const onRemoveClass = (classIndex: number) => {
-        dispatch(characterActions.removeCharacterClass(classIndex));
+    const onRemoveClass = (className: string) => {
+        dispatch(characterActions.removeCharacterClass(className));
     };
 
     useEffect(() => {
@@ -32,7 +32,7 @@ export default function ClassInfo({ characterClass }: ClassInfoProps) {
             <div className="flex justify-between items-start mb-2">
                 <h4 className="font-medium text-sm">{characterClass.name}</h4>
                 <button
-                    onClick={() => onRemoveClass}
+                    onClick={() => onRemoveClass(characterClass.name)}
                     className="text-red-600 hover:text-red-800 text-xs"
                 >
                     Remove
@@ -57,9 +57,13 @@ export default function ClassInfo({ characterClass }: ClassInfoProps) {
                     <select
                         value={`${characterClass.subclass ? `${JSON.stringify({ shortName: characterClass.subclass.shortName, source: characterClass.subclass.source, classSource: characterClass.subclass.classSource })}` : ''}`}
                         onChange={(e) => {
-                            const { shortName, source, classSource } = JSON.parse(e.target.value);
-                            const subclass = availableSubclasses.find(s => s.shortName == shortName && s.source == source && s.classSource == classSource);
-                            if (subclass) onUpdateClassSubclass(subclass);
+                            if (!e.target.value || e.target.value == '') {
+                                onUpdateClassSubclass();
+                            } else {
+                                const { shortName, source, classSource } = JSON.parse(e.target.value);
+                                const subclass = availableSubclasses.find(s => s.shortName == shortName && s.source == source && s.classSource == classSource);
+                                if (subclass) onUpdateClassSubclass(subclass);
+                            }
                         }}
                         className="mt-1 block w-full px-2 py-1 border border-gray-300 rounded-md text-xs"
                     >
