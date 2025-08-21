@@ -8,6 +8,7 @@ import { initCharacterSpell, ICharacterSpell } from '@/types/5e2024/character-sp
 import { AbilityKey } from '@/types/5e2024/character-ability-score';
 import { initCharacterBackground, ICharacterBackground } from '@/types/5e2024/character-background';
 import { initCharacterItem, ICharacterArmor, ICharacterWeapon, ICharacterShield, CharacterItem } from '@/types/5e2024/character-equip';
+import { initCharacterActions } from '@/types/5e2024/character-actions';
 
 // Action types
 export type CharacterAction =
@@ -18,7 +19,7 @@ export type CharacterAction =
   | { type: 'UPDATE_CHARACTER_SHIELD'; shield?: ICharacterShield }
   | { type: 'ADD_CHARACTER_CLASS'; classData?: ICharacterClass }
   | { type: 'UPDATE_CLASS_LEVEL'; className: string; level: number }
-  | { type: 'UPDATE_CLASS_SUBCLASS'; subclass?: ICharacterSubclass }
+  | { type: 'UPDATE_CLASS_SUBCLASS'; className: string, subclass?: ICharacterSubclass }
   | { type: 'REMOVE_CHARACTER_CLASS'; className: string }
   | { type: 'ADD_SPELL'; spellData: ICharacterSpell }
   | { type: 'REMOVE_SPELL'; spellIndex: number }
@@ -42,12 +43,19 @@ export function characterReducer(state: Character, action: CharacterAction): Cha
         ...state,
         background: newBackground
       };
-      return state;
 
     case 'UPDATE_CHARACTER_WEAPON':
       const newWeapon = initCharacterItem(action.weapon);
+      const newActions = initCharacterActions({
+        ...state,
+        equip: {
+          ...state.equip,
+          weapon: newWeapon
+        }
+      });
       return {
         ...state,
+        actions: newActions,
         equip: {
           ...state.equip,
           weapon: newWeapon
@@ -88,17 +96,19 @@ export function characterReducer(state: Character, action: CharacterAction): Cha
     case 'UPDATE_CLASS_LEVEL':
       const newClasses = [...state.classes];
       const classToUpdate = newClasses.find(cls => cls.name === action.className);
+      const otherClasses = newClasses.filter(cls => cls.name !== classToUpdate?.name);
       if (classToUpdate) {
-        classToUpdate.level = action.level;
+        const newClass = initCharacterClass({ ...classToUpdate, level: action.level });
+        return {
+          ...state,
+          classes: [...otherClasses, newClass]
+        };
       }
-      return {
-        ...state,
-        classes: newClasses
-      };
+      return state;
 
     case 'UPDATE_CLASS_SUBCLASS':
       const classesWithSubclass = [...state.classes];
-      const classToUpdateSubclass = classesWithSubclass.find(c => c.name === action.subclass?.className);
+      const classToUpdateSubclass = classesWithSubclass.find(c => c.name === action.className);
       if (classToUpdateSubclass) {
         if (action.subclass) {
           const newSubclass = initCharacterSubclass(action.subclass);
@@ -111,6 +121,25 @@ export function characterReducer(state: Character, action: CharacterAction): Cha
         ...state,
         classes: classesWithSubclass
       };
+      // if (action.className) {
+      //   const classToUpdateSubclass = classesWithSubclass.find(c => c.name === action.className);
+      //   const otherClassesWithSubclass = classesWithSubclass.filter(cls => cls.name !== classToUpdateSubclass?.name);
+      //   if (action.subclass) {
+      //     const newSubclass = initCharacterSubclass(action.subclass);
+      //     const newClassWithSubclass = initCharacterClass({ ...classToUpdateSubclass, subclass: newSubclass });
+      //     return {
+      //       ...state,
+      //       classes: [...otherClassesWithSubclass, newClassWithSubclass]
+      //     };
+      //   } else {
+      //     const newClassWithoutSubclass = initCharacterClass({ ...classToUpdateSubclass, subclass: undefined });
+      //     return {
+      //       ...state,
+      //       classes: [...otherClassesWithSubclass, newClassWithoutSubclass]
+      //     };
+      //   }
+      // }
+      // return state;
 
     case 'REMOVE_CHARACTER_CLASS':
       const filteredClasses = state.classes.filter(c => c.name != action.className);
@@ -295,8 +324,9 @@ export const characterActions = {
     level
   }),
 
-  updateClassSubclass: (subclass?: ICharacterSubclass): CharacterAction => ({
+  updateClassSubclass: (className: string, subclass?: ICharacterSubclass): CharacterAction => ({
     type: 'UPDATE_CLASS_SUBCLASS',
+    className,
     subclass
   }),
 

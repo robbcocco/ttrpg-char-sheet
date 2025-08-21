@@ -1,38 +1,78 @@
+import { normalizeEntriesToText } from '@/utils/json';
 import index from '../../data/class/index.json';
 
 export type CharacterSubclass = {
-    // constructor(characterSubclass: ICharacterSubclass) {
-    //     this.name = characterSubclass.name;
-    //     this.source = characterSubclass.source;
-    //     this.classSource = characterSubclass.source;
-    //     this.shortname = characterSubclass.shortName;
-    // }
-
     name: string;
     shortName: string;
     source: string;
     classSource: string;
+    feats: CharacterSubclassFeature[]
 }
 
-export const initCharacterSubclass = (subclass?: CharacterSubclass | ICharacterSubclass): CharacterSubclass => {
+export type CharacterSubclassFeature = {
+    name: string,
+    source: string,
+    shortName: string,
+    className: string,
+    classSource: string,
+    level: number,
+    description?: string
+}
+
+export const initCharacterSubclass = (subclass: CharacterSubclass | ICharacterSubclass): CharacterSubclass => {
     if (subclass && 'page' in subclass) {
         return {
             name: subclass.name,
             source: subclass.source,
             classSource: subclass.classSource,
-            shortName: subclass.shortName
+            shortName: subclass.shortName,
+            feats: initCharacterSubclassFeature(subclass.subclassFeatures)
         }
     } else {
         return {
-            name: subclass?.name ?? '',
-            source: subclass?.source ?? '',
-            classSource: subclass?.classSource ?? '',
-            shortName: subclass?.shortName ?? ''
+            name: subclass.name ?? '',
+            source: subclass.source ?? '',
+            classSource: subclass.classSource ?? '',
+            shortName: subclass.shortName ?? '',
+            feats: subclass.feats
         }
     }
 }
 
-export const loadSublasses = async (className: string): Promise<ICharacterSubclass[]> => {
+export const initCharacterSubclassFeature = (feats?: (string | CharacterSubclassFeature)[]): CharacterSubclassFeature[] => {
+    const newFeats: CharacterSubclassFeature[] = [];
+
+    for (const feat of feats ?? []) {
+        if (typeof (feat) == 'string' || !('gainSubclassFeature' in feat)) {
+            const newFeat = parseSubclassFeature(feat, []);
+            newFeats.push(newFeat);
+        }
+    }
+
+    return newFeats;
+}
+
+export const parseSubclassFeature = (feature: string | CharacterSubclassFeature, subclassFeatures: ICharacterSubclassFeature[] = []): CharacterSubclassFeature => {
+    //College of Tragedy|Bard|PHB|Tragedy|TDCSR|3
+    if (typeof (feature) == 'string') {
+        const [name, className, classSource, shortName, source, level] = feature.split('|');
+        const classFeature = subclassFeatures.find(cf => cf.name == name && cf.className == className && cf.source == source);
+        return {
+            name: name.trim(),
+            source: source.trim(),
+            shortName: shortName.trim(),
+            className: className.trim(),
+            classSource: classSource.trim(),
+            level: Number(level.trim()),
+            description: classFeature ? normalizeEntriesToText(classFeature.entries) : ''
+        }
+    } else {
+        const classFeature = subclassFeatures.filter(cf => cf && cf.name).find(cf => cf.name == feature.name && cf.className == feature.className && cf.source == feature.source);
+        return { ...feature, description: classFeature ? normalizeEntriesToText(classFeature.entries) : '' };
+    }
+}
+
+export const loadSubclasses = async (className: string): Promise<ICharacterSubclass[]> => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const subclasses: any[] = [];
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -47,13 +87,14 @@ export const loadSublasses = async (className: string): Promise<ICharacterSubcla
     return subclasses.flat().sort((a, b) => a.name.localeCompare(b.name));
 }
 
-export const loadSublassFeatures = async (subclassShortname: string): Promise<ICharacterSubclassFeature[]> => {
+export const loadSubclassesFeatures = async (subclasses: CharacterSubclass[]): Promise<ICharacterSubclassFeature[]> => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const features: any[] = [];
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     for (const [key, value] of Object.entries(index)) {
         const temp = await import(`../../data/class/${value}`);
-        features.push(temp.subclassFeature.filter((c: { subclassShortName: string, source: string; }) => (c.subclassShortName == subclassShortname)));
+        features.push(temp.subclassFeature?.filter((c: { subclassShortName: string, source: string; classSource: string }) =>
+            (subclasses.find(subclass => subclass.shortName == c.subclassShortName && subclass.source == c.source))));
     }
 
     return features.flat().sort((a, b) => a.name.localeCompare(b.name));

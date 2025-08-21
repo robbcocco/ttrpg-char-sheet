@@ -6,6 +6,7 @@ import CombatSection from './combat-section';
 import SpellsSection from './spells-section';
 import AbilitySection from './ability-section';
 import EquipSection from './equip-section';
+import FeatsSection from './feats-section';
 
 export default function CharacterSheet() {
   const { character } = useCharacter();
@@ -24,16 +25,18 @@ export default function CharacterSheet() {
 
           <EquipSection />
 
+          <div className="lg:col-span-2">
+            <SpellsSection />
+          </div>
+
+          <FeatsSection />
+
           {character.abilityScores.map((abilityScore) => (
             <AbilitySection
               key={abilityScore.key}
               abilityScore={abilityScore}
             />
           ))}
-
-          <div className="lg:col-span-3">
-            <SpellsSection />
-          </div>
 
         </div>
       </div>

@@ -1,6 +1,7 @@
+import { normalizeEntriesToText } from '@/utils/json';
 import index from '../../data/class/index.json';
 import { AbilityKey } from './character-ability-score';
-import { CharacterSubclass } from './character-subclass';
+import { CharacterSubclass, CharacterSubclassFeature } from './character-subclass';
 
 export type CharacterClass = {
     name: string;
@@ -10,6 +11,7 @@ export type CharacterClass = {
     proficiency: AbilityKey[];
     startingProficiencies: CharacterProficiency;
     multiclassProficiencies: CharacterProficiency;
+    feats: CharacterClassFeature[];
     spellcastingAbility?: AbilityKey;
     subclass?: CharacterSubclass;
 }
@@ -24,18 +26,21 @@ export const initCharacterClass = (characterClass: ICharacterClass | CharacterCl
             proficiency: characterClass.proficiency,
             startingProficiencies: initCharacterProficiency(characterClass.startingProficiencies),
             multiclassProficiencies: initCharacterProficiency(characterClass.multiclassing.proficienciesGained),
-            spellcastingAbility: characterClass.spellcastingAbility as AbilityKey
+            feats: initCharacterClassFeature(characterClass.classFeatures),
+            spellcastingAbility: characterClass.spellcastingAbility as AbilityKey,
         }
     } else {
         return {
-            name: characterClass?.name ?? '',
-            source: characterClass?.source ?? '',
-            level: characterClass?.level ?? 1,
-            healthDice: characterClass?.healthDice ?? 6,
-            proficiency: characterClass?.proficiency ?? [],
-            startingProficiencies: characterClass?.startingProficiencies,
-            multiclassProficiencies: characterClass?.multiclassProficiencies,
-            spellcastingAbility: characterClass.spellcastingAbility
+            name: characterClass.name ?? '',
+            source: characterClass.source ?? '',
+            level: characterClass.level ?? 1,
+            healthDice: characterClass.healthDice ?? 6,
+            proficiency: characterClass.proficiency ?? [],
+            startingProficiencies: characterClass.startingProficiencies,
+            multiclassProficiencies: characterClass.multiclassProficiencies,
+            feats: characterClass.feats,
+            spellcastingAbility: characterClass.spellcastingAbility,
+            subclass: characterClass.subclass
         }
     }
 }
@@ -51,11 +56,61 @@ export type CharacterProficiency = {
     })[];
 }
 
+export type CharacterClassFeature = {
+    name: string,
+    source: string,
+    className: string,
+    level: number,
+    description?: string
+}
+
 export const initCharacterProficiency = (proficiencies?: ICharacterProficiencies | CharacterProficiency): CharacterProficiency => {
     return {
         weapons: proficiencies?.weapons || [],
         armor: proficiencies?.armor || [],
         skills: proficiencies?.skills || []
+    }
+}
+
+export const initCharacterClassFeature = (feats?: (string | CharacterClassFeature | {
+    classFeature: string,
+    gainSubclassFeature: boolean
+})[]): CharacterClassFeature[] => {
+    const newFeats: CharacterClassFeature[] = [];
+
+    for (const feat of feats ?? []) {
+        if (typeof (feat) == 'string' || !('gainSubclassFeature' in feat)) {
+            const newFeat = parseClassFeature(feat, []);
+            newFeats.push(newFeat);
+        }
+    }
+
+    return newFeats;
+}
+
+export const CharacterClassUnlockedFeats = (characterClass: CharacterClass): (CharacterClassFeature | CharacterSubclassFeature)[] => {
+    let feats: (CharacterClassFeature | CharacterSubclassFeature)[] = [];
+    feats = feats.concat(characterClass.feats);
+    if (characterClass.subclass) feats = feats.concat(characterClass.subclass.feats);
+
+    return feats.filter((feat) => feat && feat.level && characterClass.level >= feat.level).sort((a, b) => a.level - b.level);
+}
+
+export const parseClassFeature = (feature: string | CharacterClassFeature, classFeatures: ICharacterClassFeature[]): CharacterClassFeature => {
+    //"Reckless Attack|Barbarian|XPHB|2",
+    if (typeof (feature) == 'string') {
+        const [name, className, source, level] = feature.split('|');
+        const classFeature = classFeatures.find(cf => cf.name == name && cf.className == className && cf.source == source);
+        return {
+            name: name.trim(),
+            source: source.trim(),
+            className: className.trim(),
+            level: Number(level.trim()),
+            description: classFeature ? normalizeEntriesToText(classFeature.entries) : ''
+        }
+    } else {
+        const classFeature = classFeatures.find(cf => cf.name == feature.name && cf.className == feature.className && cf.source == feature.source);
+        return { ...feature, description: classFeature ? normalizeEntriesToText(classFeature.entries) : '' };
     }
 }
 
@@ -71,13 +126,13 @@ export const loadClasses = async (): Promise<ICharacterClass[]> => {
     return classes.flat();
 }
 
-export const loadClassFeatures = async (className: string): Promise<ICharacterClassFeature[]> => {
+export const loadClassFeatures = async (classNames: string[]): Promise<ICharacterClassFeature[]> => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const features: any[] = [];
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     for (const [key, value] of Object.entries(index)) {
         const temp = await import(`../../data/class/${value}`);
-        features.push(temp.classFeature.filter((c: { className: string, source: string; }) => (c.className == className && c.source == 'XPHB')));
+        features.push(temp.classFeature.filter((c: { className: string, source: string; }) => (classNames.includes(c.className) && c.source == 'XPHB')));
     }
 
     return features.flat().sort((a, b) => a.name.localeCompare(b.name));
@@ -114,6 +169,10 @@ export interface ICharacterClass {
         proficienciesGained: ICharacterProficiencies
     };
     featProgression?: undefined;
+    classFeatures?: (string | {
+        classFeature: string,
+        gainSubclassFeature: boolean
+    })[]
 }
 
 export interface ICharacterProficiencies {

@@ -1,6 +1,6 @@
 import { characterActions, useCharacter } from "@/store/5e2024/character-store";
 import { CharacterClass } from "@/types/5e2024/character-class";
-import { ICharacterSubclass, loadSublasses } from "@/types/5e2024/character-subclass";
+import { ICharacterSubclass, loadSubclasses } from "@/types/5e2024/character-subclass";
 import { useEffect, useState } from "react";
 
 interface ClassInfoProps {
@@ -15,8 +15,8 @@ export default function ClassInfo({ characterClass }: ClassInfoProps) {
         dispatch(characterActions.updateClassLevel(className, level));
     };
 
-    const onUpdateClassSubclass = (subclass?: ICharacterSubclass) => {
-        dispatch(characterActions.updateClassSubclass(subclass));
+    const onUpdateClassSubclass = (className: string, subclass?: ICharacterSubclass) => {
+        dispatch(characterActions.updateClassSubclass(className, subclass));
     };
 
     const onRemoveClass = (className: string) => {
@@ -24,7 +24,7 @@ export default function ClassInfo({ characterClass }: ClassInfoProps) {
     };
 
     useEffect(() => {
-        loadSublasses(characterClass.name).then(setAvailableSubclasses);
+        loadSubclasses(characterClass.name).then(setAvailableSubclasses);
     }, [characterClass.name]);
 
     return (
@@ -58,11 +58,11 @@ export default function ClassInfo({ characterClass }: ClassInfoProps) {
                         value={`${characterClass.subclass ? `${JSON.stringify({ shortName: characterClass.subclass.shortName, source: characterClass.subclass.source, classSource: characterClass.subclass.classSource })}` : ''}`}
                         onChange={(e) => {
                             if (!e.target.value || e.target.value == '') {
-                                onUpdateClassSubclass();
+                                onUpdateClassSubclass(characterClass.name);
                             } else {
                                 const { shortName, source, classSource } = JSON.parse(e.target.value);
                                 const subclass = availableSubclasses.find(s => s.shortName == shortName && s.source == source && s.classSource == classSource);
-                                if (subclass) onUpdateClassSubclass(subclass);
+                                if (subclass) onUpdateClassSubclass(characterClass.name, subclass);
                             }
                         }}
                         className="mt-1 block w-full px-2 py-1 border border-gray-300 rounded-md text-xs"

@@ -20,26 +20,32 @@ export const rollDices = (dices: (string | Dice)[]): { sum: number, rolls: Roll[
     return { sum, rolls };
 }
 
+export const formatDice = (dice: Dice): string => {
+    return `${dice.number} D${dice.faces} ${dice.bonus ? ` + ${dice.bonus}` : ''}`
+}
+
 export const reduceDices = (dices: (string | Dice)[]): { faces: number, bonus?: number }[] => {
     return dices.map(parseDice).flatMap(({ number, faces, bonus }) =>
         Array.from({ length: Math.max(0, number) }, () => ({ faces, bonus }))
     );
 }
 
-export const parseDice = (dice: string | Dice): Dice => {
+export const parseDice = (dice: string | Dice, bonus?: number): Dice => {
     if (typeof (dice) == 'string') {
         if (dice.toLowerCase().indexOf('d') > 0) {
             return {
                 number: Number(dice.toLowerCase().split('d')[0]),
-                faces: Number(dice.toLowerCase().split('d')[1])
+                faces: Number(dice.toLowerCase().split('d')[1]),
+                bonus
             }
         } else {
             return {
                 number: 1,
-                faces: 20
+                faces: 20,
+                bonus
             }
         }
     } else {
-        return dice;
+        return { ...dice, bonus };
     }
 }

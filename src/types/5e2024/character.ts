@@ -1,11 +1,13 @@
 import { reduceDices } from '@/utils/dice';
 import { AbilityName, AbilityKey, CharacterAbilityScore, initCharacterAbilityScore, CharacterAbilityModifier } from './character-ability-score';
 import { CharacterBackground } from './character-background';
-import { CharacterClass } from './character-class';
+import { CharacterClass, CharacterClassFeature, CharacterClassUnlockedFeats } from './character-class';
 import { CharacterEquip, initCharacterEquip } from './character-equip';
 import { CharacterInfo, initCharacterInfo } from './character-info';
 import { CharacterSkill, initCharacterSkill, loadSkills } from './character-skill';
 import { CharacterSpell } from './character-spell';
+import { CharacterAction, initCharacterActions } from './character-actions';
+import { CharacterSubclassFeature } from './character-subclass';
 
 export type Character = {
     info: CharacterInfo
@@ -17,6 +19,8 @@ export type Character = {
     abilityScores: CharacterAbilityScore[];
 
     skills: CharacterSkill[];
+
+    actions: CharacterAction[];
 
     spells: CharacterSpell[];
 
@@ -37,6 +41,7 @@ export const initCharacter = (character?: Character): Character => {
             : abilities.map(ability => {
                 return initCharacterAbilityScore(ability, proficiencies);
             }),
+        actions: initCharacterActions(),
         skills: loadSkills().map(skill => initCharacterSkill(skill)),
         spells: [],
         equip: initCharacterEquip()
@@ -117,6 +122,16 @@ export const CharacterAbilityProficiency = (character?: Character): AbilityKey[]
 //         return []
 //     }
 // }
+
+export const CharacterFeats = (character?: Character): (CharacterClassFeature | CharacterSubclassFeature)[] => {
+    let feats: (CharacterClassFeature | CharacterSubclassFeature)[] = [];
+
+    for (const characterClass of character?.classes ?? []) {
+        feats = feats.concat(CharacterClassUnlockedFeats(characterClass));
+    }
+
+    return feats;
+}
 
 const abilities: Array<[AbilityName, AbilityKey]> = [
     ['strength', 'str'],

@@ -27,6 +27,7 @@ export type CharacterItem = {
     dmg1?: string;
     dmgType?: string;
     dmg2?: string;
+    weaponType?: string;
     armorType?: 'Light' | 'Medium' | 'Heavy'
     ac?: number;
 }
@@ -40,6 +41,7 @@ export const initCharacterItem = (item?: ICharacterWeapon | ICharacterArmor | IC
             dmgType: item.dmgType,
             dmg2: item.dmg2,
             weight: item?.weight ?? 0,
+            weaponType: item.weaponCategory,
             type: 'weapon'
         }
     } else if (item && 'armor' in item) {
@@ -67,11 +69,13 @@ export const initCharacterItem = (item?: ICharacterWeapon | ICharacterArmor | IC
         return {
             name: item?.name ?? '',
             source: item?.source ?? '',
-            dmg1: item?.dmg1 ?? '',
-            dmgType: item?.dmgType ?? '',
-            dmg2: item?.dmg2 ?? '',
-            weight: item?.weight ?? 0,
-            ac: item?.ac ?? 0,
+            weight: item?.weight,
+            dmg1: item?.dmg1,
+            dmgType: item?.dmgType,
+            dmg2: item?.dmg2,
+            weaponType: item?.weaponType,
+            ac: item?.ac,
+            armorType: item?.armorType,
             type: item?.type
         }
     }
