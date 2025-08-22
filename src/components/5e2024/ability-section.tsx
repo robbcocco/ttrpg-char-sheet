@@ -1,18 +1,23 @@
 import { CharacterAbilityScore, AbilityKey, CharacterAbilityModifier, CharacterAbilitySavingThrow } from "@/types/5e2024/character-ability-score";
-import { CharacterSkillScore } from "@/types/5e2024/character-skill";
+import { CharacterSkillProficiencyAvailable, CharacterSkillScore } from "@/types/5e2024/character-skill";
 import { useCharacterSkills, useCharacter, useCharacterInfo, useCharacterAbilityScores, characterActions } from '@/store/5e2024/character-store';
 import { formatModifier } from "@/utils";
 import DiceRoller from "../commons/dice-roller";
+import { CharacterProficiencies } from "@/types/5e2024/character";
+import { useEffect, useState } from "react";
+import { CharacterSkillProficiency } from "@/types/5e2024/character-class";
 
 interface AbilitySectionProps {
   abilityScore: CharacterAbilityScore;
 }
 
 export default function AbilitySection({ abilityScore }: AbilitySectionProps) {
+  const { character } = useCharacter();
   const skills = useCharacterSkills();
   const characterInfo = useCharacterInfo();
   const abilityScores = useCharacterAbilityScores();
   const { dispatch } = useCharacter();
+  const [skillProficiencies, setSkillProficiencies] = useState<CharacterSkillProficiency[]>([]);
 
   // Action handlers
   const onUpdateAbility = (abilityKey: AbilityKey, value: number) => {
@@ -32,6 +37,11 @@ export default function AbilitySection({ abilityScore }: AbilitySectionProps) {
     onUpdateAbility(abilityScore.key, value);
   };
 
+  useEffect(() => {
+    const characterProficiency = CharacterProficiencies(character);
+    setSkillProficiencies(characterProficiency.skills);
+  }, [character, character.classes]);
+
   // Filter skills that belong to this ability
   const abilitySkills = skills.filter(skill => skill.ability === abilityScore.key);
 
@@ -49,7 +59,7 @@ export default function AbilitySection({ abilityScore }: AbilitySectionProps) {
             type="number"
             min="1"
             max="30"
-            value={abilityScore.value || 10}
+            value={abilityScore.value}
             onChange={handleAbilityChange}
             className="w-16 text-center text-xl font-bold border-2 border-gray-300 rounded-md py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
@@ -86,20 +96,23 @@ export default function AbilitySection({ abilityScore }: AbilitySectionProps) {
         <div>
           <h4 className="text-sm font-semibold text-gray-700 mb-2">Skills</h4>
           <div className="space-y-1">
-            {abilitySkills.map((skill) => (
-              <div key={skill.name} className="flex items-center justify-between bg-gray-50 p-2 rounded">
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    checked={skill.proficient}
-                    onChange={() => onToggleSkillProficiency(skill.name)}
-                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                  />
-                  <span className="text-sm">{skill.name}</span>
+            {abilitySkills.map((skill) => {
+              const skillAvailable = CharacterSkillProficiencyAvailable({ skill, skillProficiencies });
+              return (
+                <div key={skill.name} className={`flex items-center justify-between ${skillAvailable ? 'bg-green-50' : 'bg-gray-50'} p-2 rounded`}>
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      checked={skill.proficient}
+                      onChange={() => onToggleSkillProficiency(skill.name)}
+                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                    <span className="text-sm">{skill.name}</span>
+                  </div>
+                  <span className="font-medium">{formatModifier(CharacterSkillScore({ skill, abilityScores, info: characterInfo }))}</span>
                 </div>
-                <span className="font-medium">{formatModifier(CharacterSkillScore({ skill, abilityScores, info: characterInfo }))}</span>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </div>
       )}

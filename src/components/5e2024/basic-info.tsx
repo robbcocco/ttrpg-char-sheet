@@ -7,7 +7,6 @@ export default function BasicInfo() {
   const characterInfo = useCharacterInfo();
   const { dispatch } = useCharacter();
 
-  // Action handlers
   const onUpdate = (field: keyof Character['info'], value: string | number) => {
     dispatch(characterActions.updateBasicInfo(field, value));
   };

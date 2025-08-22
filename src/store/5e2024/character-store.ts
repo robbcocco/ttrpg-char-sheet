@@ -50,11 +50,10 @@ export function characterReducer(state: Character, action: CharacterAction): Cha
     case 'ADD_CHARACTER_FEAT':
       if (action.featData) {
         const newFeat = initCharacterFeat(action.featData);
-        const refreshChar = initCharacter({
+        return initCharacter({
           ...state,
           feats: [...state.feats, newFeat]
         });
-        return refreshChar;
       }
       return state;
 
@@ -106,11 +105,10 @@ export function characterReducer(state: Character, action: CharacterAction): Cha
     case 'ADD_CHARACTER_CLASS':
       if (action.classData) {
         const newClass = initCharacterClass(action.classData);
-        const refreshChar = initCharacter({
+        return initCharacter({
           ...state,
           classes: [...state.classes, newClass]
         });
-        return refreshChar;
       }
       return state;
 

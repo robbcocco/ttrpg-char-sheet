@@ -3,6 +3,7 @@ import index from '../../data/class/index.json';
 import { AbilityKey } from './character-ability-score';
 import { CharacterSubclass, CharacterSubclassFeature } from './character-subclass';
 import { CharacterFeat } from './character-feat';
+import { loadSkills } from './character-skill';
 
 export type CharacterClass = {
     name: string;
@@ -49,12 +50,12 @@ export const initCharacterClass = (characterClass: ICharacterClass | CharacterCl
 export type CharacterProficiency = {
     weapons: string[];
     armor: string[];
-    skills: (string | {
-        choose: {
-            from: string[];
-            count: number;
-        };
-    })[];
+    skills: CharacterSkillProficiency[]
+}
+
+export type CharacterSkillProficiency = string | {
+    from: string[];
+    count: number;
 }
 
 export type CharacterClassFeature = CharacterFeat & {
@@ -62,11 +63,45 @@ export type CharacterClassFeature = CharacterFeat & {
     className: string,
 }
 
+export const sortCharacterSkillProficiencies = (proficiencies: CharacterSkillProficiency[]): CharacterSkillProficiency[] => {
+    return proficiencies.sort((a, b) => {
+        const isAString = typeof a === "string";
+        const isBString = typeof b === "string";
+
+        if (isAString && !isBString) return -1;
+        if (!isAString && isBString) return 1;
+
+        if (isAString && isBString) {
+            return (a as string).localeCompare(b as string);
+        }
+
+        const objA = a as { from: string[]; count: number };
+        const objB = b as { from: string[]; count: number };
+
+        return objA.from.length - objB.from.length;
+    })
+}
+
 export const initCharacterProficiency = (proficiencies?: ICharacterProficiencies | CharacterProficiency): CharacterProficiency => {
+    const skills: CharacterSkillProficiency[] = [];
+
+    for (const skill of proficiencies?.skills ?? []) {
+        if (typeof (skill) == 'string' || 'from' in skill) {
+            skills.push(skill);
+        } else if ('any' in skill) {
+            skills.push({
+                from: loadSkills().map(s => s.name),
+                count: skill.any
+            })
+        } else if ('choose' in skill) {
+            skills.push(skill.choose);
+        }
+    }
+
     return {
         weapons: proficiencies?.weapons || [],
         armor: proficiencies?.armor || [],
-        skills: proficiencies?.skills || []
+        skills: skills
     }
 }
 
@@ -176,7 +211,7 @@ export interface ICharacterClass {
 export interface ICharacterProficiencies {
     weapons: string[];
     armor: string[];
-    skills: (string | {
+    skills: (string | { any: number; } | {
         choose: {
             from: string[];
             count: number;

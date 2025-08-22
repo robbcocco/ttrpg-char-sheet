@@ -1,7 +1,7 @@
 import { reduceDices } from '@/utils/dice';
 import { AbilityName, AbilityKey, CharacterAbilityScore, initCharacterAbilityScore, CharacterAbilityModifier } from './character-ability-score';
 import { CharacterBackground } from './character-background';
-import { CharacterClass, CharacterClassFeature, CharacterClassUnlockedFeats } from './character-class';
+import { CharacterClass, CharacterClassFeature, CharacterClassUnlockedFeats, CharacterProficiency, CharacterSkillProficiency, sortCharacterSkillProficiencies } from './character-class';
 import { CharacterEquip, initCharacterEquip } from './character-equip';
 import { CharacterInfo, initCharacterInfo } from './character-info';
 import { CharacterSkill, initCharacterSkill, loadSkills } from './character-skill';
@@ -31,7 +31,7 @@ export type Character = {
 }
 
 export const initCharacter = (character?: Character): Character => {
-    const proficiencies = CharacterAbilityProficiency(character);
+    const proficiencies = CharacterAbilityProficiencies(character);
     
     return {
         info: character?.info ?? initCharacterInfo(),
@@ -110,22 +110,41 @@ export const CharacterHitPoints = (character: Character): number => {
     return baseHitPoints;
 }
 
-export const CharacterAbilityProficiency = (character?: Character): AbilityKey[] => {
+export const CharacterAbilityProficiencies = (character?: Character): AbilityKey[] => {
     const mainClass = character?.classes[0];
     return mainClass ? mainClass.proficiency : [];
 }
 
-// export const CharacterSkillProficiency = (character: Character): string[] => {
-//     const [mainClass, ...multiClasses] = character.classes;
-//     if (mainClass) {
-//         let skillProficiencies: string[] = [];
+export const CharacterProficiencies = (character: Character): CharacterProficiency => {
+    const [mainClass, ...multiClasses] = character.classes;
+    if (mainClass) {
+        let weapons: string[] = [];
+        let armor: string[] = [];
+        let skillProficiencies: CharacterSkillProficiency[] = [];
 
+        weapons = [...new Set([...weapons, ...mainClass.startingProficiencies.weapons])];
+        armor = [...new Set([...armor, ...mainClass.startingProficiencies.armor])];
+        skillProficiencies = skillProficiencies.concat(mainClass.startingProficiencies.skills);
 
-//         return skillProficiencies;
-//     } else {
-//         return []
-//     }
-// }
+        for (const mc of multiClasses) {
+            weapons = [...new Set([...weapons, ...mc.multiclassProficiencies.weapons])];
+            armor = [...new Set([...armor, ...mc.multiclassProficiencies.armor])];
+            skillProficiencies = skillProficiencies.concat(mc.multiclassProficiencies.skills);
+        }
+
+        return {
+            weapons: weapons,
+            armor: armor,
+            skills: sortCharacterSkillProficiencies(skillProficiencies)
+        };
+    } else {
+        return {
+            weapons: [],
+            armor: [],
+            skills: []
+        }
+    }
+}
 
 export const CharacterFeats = (character?: Character): (CharacterClassFeature | CharacterSubclassFeature)[] => {
     let feats: (CharacterClassFeature | CharacterSubclassFeature)[] = [];
