@@ -52,7 +52,7 @@ export const CharacterSkillScore = ({
 
 export const CharacterSkillProficiencyAvailable = ({ skill, skillProficiencies}: {skill: CharacterSkill, skillProficiencies: CharacterSkillProficiency[]}): boolean => {
     for (const skillProficiency of skillProficiencies) {
-        if (!skill.proficient && typeof(skillProficiency) != 'string' && skillProficiency.from.includes(skill.name.toLowerCase()) && skillProficiency.count > 0) return true;
+        if (!skill.proficient && typeof(skillProficiency) != 'string' && skillProficiency.from.map(f => f.toLowerCase()).includes(skill.name.toLowerCase()) && skillProficiency.count > 0) return true;
     }
 
     return false;
