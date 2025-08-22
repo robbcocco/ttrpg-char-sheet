@@ -47,7 +47,7 @@ export default function ClassesSection() {
                 {characterClasses.map((characterClass, index) => (
                     <ClassInfo
                         key={index}
-                        characterClass={characterClass}
+                        index={index}
                     />
                 ))}
             </div>

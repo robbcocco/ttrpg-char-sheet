@@ -8,11 +8,14 @@ import { CharacterSkill, initCharacterSkill, loadSkills } from './character-skil
 import { CharacterSpell } from './character-spell';
 import { CharacterAction, initCharacterActions } from './character-actions';
 import { CharacterSubclassFeature } from './character-subclass';
+import { CharacterFeat } from './character-feat';
 
 export type Character = {
     info: CharacterInfo
 
     background?: CharacterBackground;
+
+    feats: CharacterFeat[];
 
     classes: CharacterClass[];
 
@@ -33,6 +36,7 @@ export const initCharacter = (character?: Character): Character => {
     return {
         info: character?.info ?? initCharacterInfo(),
         background: character?.background ?? undefined,
+        feats: character?.feats ?? [],
         classes: character?.classes ?? [],
         abilityScores: (character?.abilityScores?.length ?? 0) > 0 
             ? character!.abilityScores.map(ability => {

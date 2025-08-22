@@ -2,6 +2,7 @@ import { normalizeEntriesToText } from '@/utils/json';
 import index from '../../data/class/index.json';
 import { AbilityKey } from './character-ability-score';
 import { CharacterSubclass, CharacterSubclassFeature } from './character-subclass';
+import { CharacterFeat } from './character-feat';
 
 export type CharacterClass = {
     name: string;
@@ -56,12 +57,9 @@ export type CharacterProficiency = {
     })[];
 }
 
-export type CharacterClassFeature = {
-    name: string,
-    source: string,
-    className: string,
+export type CharacterClassFeature = CharacterFeat & {
     level: number,
-    description?: string
+    className: string,
 }
 
 export const initCharacterProficiency = (proficiencies?: ICharacterProficiencies | CharacterProficiency): CharacterProficiency => {

@@ -1,15 +1,16 @@
-import { characterActions, useCharacter } from "@/store/5e2024/character-store";
-import { CharacterClass } from "@/types/5e2024/character-class";
+import { characterActions, useCharacter, useCharacterClasses } from "@/store/5e2024/character-store";
 import { ICharacterSubclass, loadSubclasses } from "@/types/5e2024/character-subclass";
 import { useEffect, useState } from "react";
 
 interface ClassInfoProps {
-    characterClass: CharacterClass;
+    index: number;
 }
 
-export default function ClassInfo({ characterClass }: ClassInfoProps) {
+export default function ClassInfo({ index }: ClassInfoProps) {
     const { dispatch } = useCharacter();
+    const classes = useCharacterClasses();
     const [availableSubclasses, setAvailableSubclasses] = useState<ICharacterSubclass[]>([]);
+    const characterClass = classes[index];
 
     const onUpdateClassLevel = (className: string, level: number) => {
         dispatch(characterActions.updateClassLevel(className, level));
@@ -19,8 +20,8 @@ export default function ClassInfo({ characterClass }: ClassInfoProps) {
         dispatch(characterActions.updateClassSubclass(className, subclass));
     };
 
-    const onRemoveClass = (className: string) => {
-        dispatch(characterActions.removeCharacterClass(className));
+    const onRemoveClass = (index: number) => {
+        dispatch(characterActions.removeCharacterClass(index));
     };
 
     useEffect(() => {
@@ -32,7 +33,7 @@ export default function ClassInfo({ characterClass }: ClassInfoProps) {
             <div className="flex justify-between items-start mb-2">
                 <h4 className="font-medium text-sm">{characterClass.name}</h4>
                 <button
-                    onClick={() => onRemoveClass(characterClass.name)}
+                    onClick={() => onRemoveClass(index)}
                     className="text-red-600 hover:text-red-800 text-xs"
                 >
                     Remove

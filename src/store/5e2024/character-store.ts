@@ -9,18 +9,21 @@ import { AbilityKey } from '@/types/5e2024/character-ability-score';
 import { initCharacterBackground, ICharacterBackground } from '@/types/5e2024/character-background';
 import { initCharacterItem, ICharacterArmor, ICharacterWeapon, ICharacterShield, CharacterItem } from '@/types/5e2024/character-equip';
 import { initCharacterActions } from '@/types/5e2024/character-actions';
+import { ICharacterFeat, initCharacterFeat } from '@/types/5e2024/character-feat';
 
 // Action types
 export type CharacterAction =
   | { type: 'UPDATE_BASIC_INFO'; field: keyof Character['info']; value: string | number }
   | { type: 'UPDATE_CHARACTER_BACKGROUND'; background?: Partial<ICharacterBackground> }
+  | { type: 'ADD_CHARACTER_FEAT'; featData?: ICharacterFeat }
+  | { type: 'REMOVE_CHARACTER_FEAT'; featIndex: number }
   | { type: 'UPDATE_CHARACTER_WEAPON'; weapon?: ICharacterWeapon }
   | { type: 'UPDATE_CHARACTER_ARMOR'; armor?: ICharacterArmor }
   | { type: 'UPDATE_CHARACTER_SHIELD'; shield?: ICharacterShield }
   | { type: 'ADD_CHARACTER_CLASS'; classData?: ICharacterClass }
   | { type: 'UPDATE_CLASS_LEVEL'; className: string; level: number }
   | { type: 'UPDATE_CLASS_SUBCLASS'; className: string, subclass?: ICharacterSubclass }
-  | { type: 'REMOVE_CHARACTER_CLASS'; className: string }
+  | { type: 'REMOVE_CHARACTER_CLASS'; classIndex: number }
   | { type: 'ADD_SPELL'; spellData: ICharacterSpell }
   | { type: 'REMOVE_SPELL'; spellIndex: number }
   | { type: 'UPDATE_ABILITY_SCORE'; abilityKey: AbilityKey; value: number }
@@ -42,6 +45,24 @@ export function characterReducer(state: Character, action: CharacterAction): Cha
       return {
         ...state,
         background: newBackground
+      };
+
+    case 'ADD_CHARACTER_FEAT':
+      if (action.featData) {
+        const newFeat = initCharacterFeat(action.featData);
+        const refreshChar = initCharacter({
+          ...state,
+          feats: [...state.feats, newFeat]
+        });
+        return refreshChar;
+      }
+      return state;
+
+    case 'REMOVE_CHARACTER_FEAT':
+      const filteredFeats = state.feats.filter((f, i) => i != action.featIndex);
+      return {
+        ...state,
+        feats: filteredFeats
       };
 
     case 'UPDATE_CHARACTER_WEAPON':
@@ -123,28 +144,9 @@ export function characterReducer(state: Character, action: CharacterAction): Cha
         ...state,
         classes: classesWithSubclass
       };
-      // if (action.className) {
-      //   const classToUpdateSubclass = classesWithSubclass.find(c => c.name === action.className);
-      //   const otherClassesWithSubclass = classesWithSubclass.filter(cls => cls.name !== classToUpdateSubclass?.name);
-      //   if (action.subclass) {
-      //     const newSubclass = initCharacterSubclass(action.subclass);
-      //     const newClassWithSubclass = initCharacterClass({ ...classToUpdateSubclass, subclass: newSubclass });
-      //     return {
-      //       ...state,
-      //       classes: [...otherClassesWithSubclass, newClassWithSubclass]
-      //     };
-      //   } else {
-      //     const newClassWithoutSubclass = initCharacterClass({ ...classToUpdateSubclass, subclass: undefined });
-      //     return {
-      //       ...state,
-      //       classes: [...otherClassesWithSubclass, newClassWithoutSubclass]
-      //     };
-      //   }
-      // }
-      // return state;
 
     case 'REMOVE_CHARACTER_CLASS':
-      const filteredClasses = state.classes.filter(c => c.name != action.className);
+      const filteredClasses = state.classes.filter((c, i) => i != action.classIndex);
       return {
         ...state,
         classes: filteredClasses
@@ -300,6 +302,16 @@ export const characterActions = {
     background
   }),
 
+  addCharacterFeat: (featData?: ICharacterFeat): CharacterAction => ({
+    type: 'ADD_CHARACTER_FEAT',
+    featData
+  }),
+
+  removeCharacterFeat: (featIndex: number): CharacterAction => ({
+    type: 'REMOVE_CHARACTER_FEAT',
+    featIndex
+  }),
+
   updateCharacterWeapon: (weapon?: ICharacterWeapon): CharacterAction => ({
     type: 'UPDATE_CHARACTER_WEAPON',
     weapon
@@ -332,9 +344,9 @@ export const characterActions = {
     subclass
   }),
 
-  removeCharacterClass: (className: string): CharacterAction => ({
+  removeCharacterClass: (classIndex: number): CharacterAction => ({
     type: 'REMOVE_CHARACTER_CLASS',
-    className
+    classIndex
   }),
 
   addSpell: (spellData: ICharacterSpell): CharacterAction => ({

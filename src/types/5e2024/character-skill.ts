@@ -43,7 +43,6 @@ export const CharacterSkillScore = ({
     return skill.proficient ? CharacterAbilityModifier(score) + Number(info.proficiencyBonus) : CharacterAbilityModifier(score);
 }
 
-
 export const loadSkills = (): (ICharacterSkill)[] => {
     return skills.filter(skill => skill.source == 'XPHB');
 }

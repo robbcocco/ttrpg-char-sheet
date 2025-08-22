@@ -1,5 +1,6 @@
 import { normalizeEntriesToText } from '@/utils/json';
 import index from '../../data/class/index.json';
+import { CharacterFeat } from './character-feat';
 
 export type CharacterSubclass = {
     name: string;
@@ -9,14 +10,11 @@ export type CharacterSubclass = {
     feats: CharacterSubclassFeature[]
 }
 
-export type CharacterSubclassFeature = {
-    name: string,
-    source: string,
+export type CharacterSubclassFeature = CharacterFeat & {
+    level: number,
     shortName: string,
     className: string,
     classSource: string,
-    level: number,
-    description?: string
 }
 
 export const initCharacterSubclass = (subclass: CharacterSubclass | ICharacterSubclass): CharacterSubclass => {
