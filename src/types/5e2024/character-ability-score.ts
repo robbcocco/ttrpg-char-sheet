@@ -17,12 +17,11 @@ export const initCharacterAbilityScore = (score?: CharacterAbilityScore | [Abili
         }
     } else {
         const key = score?.key ?? 'str';
-        const isProficient = proficiencies.includes(key);
         return {
             name: score?.name ?? 'strength',
             key: key,
             value: score?.value ?? 10,
-            savingThrowProficient: isProficient,
+            savingThrowProficient: proficiencies.includes(key),
         }
     }
 }

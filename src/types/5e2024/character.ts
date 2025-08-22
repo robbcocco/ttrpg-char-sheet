@@ -32,6 +32,7 @@ export type Character = {
 
 export const initCharacter = (character?: Character): Character => {
     const proficiencies = CharacterAbilityProficiencies(character);
+    const { skills } = CharacterProficiencies(character);
     
     return {
         info: character?.info ?? initCharacterInfo(),
@@ -46,7 +47,7 @@ export const initCharacter = (character?: Character): Character => {
                 return initCharacterAbilityScore(ability, proficiencies);
             }),
         actions: initCharacterActions(),
-        skills: loadSkills().map(skill => initCharacterSkill(skill)),
+        skills: loadSkills().map(skill => initCharacterSkill(skill, skills)),
         spells: [],
         equip: initCharacterEquip()
     }
@@ -115,8 +116,8 @@ export const CharacterAbilityProficiencies = (character?: Character): AbilityKey
     return mainClass ? mainClass.proficiency : [];
 }
 
-export const CharacterProficiencies = (character: Character): CharacterProficiency => {
-    const [mainClass, ...multiClasses] = character.classes;
+export const CharacterProficiencies = (character?: Character): CharacterProficiency => {
+    const [mainClass, ...multiClasses] = character?.classes ?? [];
     if (mainClass) {
         let weapons: string[] = [];
         let armor: string[] = [];

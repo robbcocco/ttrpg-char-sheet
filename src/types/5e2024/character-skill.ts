@@ -12,14 +12,14 @@ export type CharacterSkill = {
     proficient: boolean;
 }
 
-export const initCharacterSkill = (skill?: ICharacterSkill | CharacterSkill): CharacterSkill => {
+export const initCharacterSkill = (skill?: ICharacterSkill | CharacterSkill, skillProficiencies?: CharacterSkillProficiency[]): CharacterSkill => {
     if (skill && 'page' in skill) {
         return {
             name: skill.name,
             source: skill.source,
             ability: skill.ability as AbilityKey,
             description: normalizeEntriesToText<ICharacterSkill['entries']>(skill.entries),
-            proficient: false,
+            proficient: !!skillProficiencies?.filter(s => typeof(s) == 'string').find(s => skill.name.toLowerCase() == s.toLowerCase()),
         }
     } else {
         return {
@@ -27,7 +27,7 @@ export const initCharacterSkill = (skill?: ICharacterSkill | CharacterSkill): Ch
             source: skill?.source ?? '',
             description: skill?.description ?? '',
             ability: skill?.ability ?? 'str',
-            proficient: skill?.proficient ?? false
+            proficient: skill?.proficient ?? !!skillProficiencies?.filter(s => typeof(s) == 'string').find(s => skill?.name.toLowerCase() == s.toLowerCase())
         }
     }
 }
