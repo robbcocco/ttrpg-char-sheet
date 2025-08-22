@@ -55,7 +55,7 @@ export default function FeatsSection() {
       </div>
 
       {/* Character Feats */}
-      <div className="space-y-1">
+      {character.feats && character.feats.length > 0 && <div className="space-y-1">
         <label className="block text-sm font-medium text-gray-700">Character Feats</label>
         {character.feats.map((feat, index) => {
           return (
@@ -72,10 +72,10 @@ export default function FeatsSection() {
             </div>
           )
         })}
-      </div>
+      </div>}
 
       {/* Class Feats */}
-      <div className="space-y-1">
+      {CharacterFeats(character).length > 0 && <div className="space-y-1">
         <label className="block text-sm font-medium text-gray-700">Class Feats</label>
         {CharacterFeats(character).map((feature, index) => {
           let feat: CharacterClassFeature | CharacterSubclassFeature;
@@ -92,7 +92,7 @@ export default function FeatsSection() {
             </div>
           )
         })}
-      </div>
+      </div>}
     </div>
   );
 }

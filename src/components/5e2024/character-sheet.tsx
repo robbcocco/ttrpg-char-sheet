@@ -28,24 +28,26 @@ export default function CharacterSheet() {
           </div>
 
           <div className="lg:col-span-3">
-            <EquipSection />
-          </div>
-
-          <div className="lg:col-span-6">
-            <SpellsSection />
-          </div>
-
-          <div className="lg:col-span-6">
             <FeatsSection />
           </div>
 
-          {character.abilityScores.map((abilityScore) => (
-            <div key={abilityScore.key} className="lg:col-span-2">
-              <AbilitySection
-                abilityScore={abilityScore}
-              />
-            </div>
-          ))}
+          <div className="lg:col-span-4">
+            <EquipSection />
+          </div>
+
+          <div className="lg:col-span-8">
+            {!!character.classes.find(cc => cc.spellcastingAbility) && <SpellsSection />}
+          </div>
+
+          <div className="grid grid-cols-2 lg:grid-cols-6 lg:col-span-12 gap-6">
+            {character.abilityScores.map((abilityScore) => (
+              <div key={abilityScore.key} className="lg:col-span-1">
+                <AbilitySection
+                  abilityScore={abilityScore}
+                />
+              </div>
+            ))}
+          </div>
 
         </div>
       </div>
