@@ -96,12 +96,14 @@ export function characterReducer(state: Character, action: CharacterAction): Cha
     case 'UPDATE_CLASS_LEVEL':
       const newClasses = [...state.classes];
       const classToUpdate = newClasses.find(cls => cls.name === action.className);
-      const otherClasses = newClasses.filter(cls => cls.name !== classToUpdate?.name);
+      // const otherClasses = newClasses.filter(cls => cls.name !== classToUpdate?.name);
       if (classToUpdate) {
+        const classIndex = newClasses.indexOf(classToUpdate);
         const newClass = initCharacterClass({ ...classToUpdate, level: action.level });
+        newClasses[classIndex] = newClass;
         return {
           ...state,
-          classes: [...otherClasses, newClass]
+          classes: newClasses
         };
       }
       return state;

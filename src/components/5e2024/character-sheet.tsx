@@ -18,24 +18,33 @@ export default function CharacterSheet() {
           <h1 className="text-3xl font-bold text-gray-900">D&D 5e Character Sheet</h1>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <BasicInfo />
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <div className="lg:col-span-4">
+            <BasicInfo />
+          </div>
 
-          <CombatSection />
+          <div className="lg:col-span-5">
+            <CombatSection />
+          </div>
 
-          <EquipSection />
+          <div className="lg:col-span-3">
+            <EquipSection />
+          </div>
 
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-6">
             <SpellsSection />
           </div>
 
-          <FeatsSection />
+          <div className="lg:col-span-6">
+            <FeatsSection />
+          </div>
 
           {character.abilityScores.map((abilityScore) => (
-            <AbilitySection
-              key={abilityScore.key}
-              abilityScore={abilityScore}
-            />
+            <div key={abilityScore.key} className="lg:col-span-2">
+              <AbilitySection
+                abilityScore={abilityScore}
+              />
+            </div>
           ))}
 
         </div>

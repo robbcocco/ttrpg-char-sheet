@@ -29,7 +29,7 @@ export default function FeatsSection() {
                     return (
                         <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded">
                             <div className="flex items-center space-x-2">
-                                <span className="text-sm">{feat.name}, {feat.description}</span>
+                                <span className="text-sm">{feat.name}</span>
                             </div>
                         </div>
                     )
