@@ -33,20 +33,20 @@ export type Character = {
 export const initCharacter = (character?: Character): Character => {
     const proficiencies = CharacterAbilityProficiencies(character);
     const { skills } = CharacterProficiencies(character);
-    
+
     return {
         info: character?.info ?? initCharacterInfo(),
         background: character?.background ?? undefined,
         feats: character?.feats ?? [],
         classes: character?.classes ?? [],
         abilityScores: // character?.abilityScores ?? abilities.map(ability => initCharacterAbilityScore(ability, proficiencies)),
-        (character?.abilityScores?.length ?? 0) > 0 
-            ? character!.abilityScores.map(ability => {
-                return initCharacterAbilityScore(ability, proficiencies);
-            })
-            : abilities.map(ability => {
-                return initCharacterAbilityScore(ability, proficiencies);
-            }),
+            (character?.abilityScores?.length ?? 0) > 0
+                ? character!.abilityScores.map(ability => {
+                    return initCharacterAbilityScore(ability, proficiencies);
+                })
+                : abilities.map(ability => {
+                    return initCharacterAbilityScore(ability, proficiencies);
+                }),
         actions: initCharacterActions(),
         skills: character?.skills.map(skill => initCharacterSkill(skill, skills)) ?? loadSkills().map(skill => initCharacterSkill(skill, skills)),
         spells: [],
@@ -141,24 +141,30 @@ export const CharacterProficiencies = (character?: Character): CharacterProficie
         skillProficiencies = skillProficiencies.concat(character.background.proficiencies);
     }
 
+    if (character?.feats && character?.feats.length > 0) {
+        for (const feat of character.feats) {
+            skillProficiencies = skillProficiencies.concat(feat.proficiencies);
+        }
+    }
+
     skillProficiencies = sortCharacterSkillProficiencies(skillProficiencies);
     for (const characterSkill of characterSkills) {
         if (characterSkill.proficient) {
             const skillProficiency = skillProficiencies.find(skillProficiency =>
-                (typeof(skillProficiency)  == 'string' && skillProficiency.toLowerCase() == characterSkill.name.toLowerCase()) ||
-                (typeof(skillProficiency)  != 'string' &&
-                skillProficiency.from.map(f => f.toLowerCase()).includes(characterSkill.name.toLowerCase()) &&
-                (skillProficiency.used.includes(characterSkill.name) || skillProficiency.used.length < skillProficiency.count))
+                (typeof (skillProficiency) == 'string' && skillProficiency.toLowerCase() == characterSkill.name.toLowerCase()) ||
+                (typeof (skillProficiency) != 'string' &&
+                    skillProficiency.from.map(f => f.toLowerCase()).includes(characterSkill.name.toLowerCase()) &&
+                    (skillProficiency.used.includes(characterSkill.name) || skillProficiency.used.length < skillProficiency.count))
             );
-            if (skillProficiency && typeof(skillProficiency) != 'string') {
+            if (skillProficiency && typeof (skillProficiency) != 'string') {
                 skillProficiency.used = [...new Set([characterSkill.name, ...skillProficiency.used])];
             }
         } else {
             const skillProficienciesFiltered = skillProficiencies.filter(skillProficiency =>
-                typeof(skillProficiency) != 'string' &&
+                typeof (skillProficiency) != 'string' &&
                 skillProficiency.used.map(f => f.toLowerCase()).includes(characterSkill.name.toLowerCase()));
             for (const skillProficiency of skillProficienciesFiltered) {
-                if (skillProficiency && typeof(skillProficiency) != 'string') {
+                if (skillProficiency && typeof (skillProficiency) != 'string') {
                     skillProficiency.used = skillProficiency.used.filter(use => use != characterSkill.name);
                 }
             }

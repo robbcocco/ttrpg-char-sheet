@@ -59,10 +59,10 @@ export function characterReducer(state: Character, action: CharacterAction): Cha
 
     case 'REMOVE_CHARACTER_FEAT':
       const filteredFeats = state.feats.filter((f, i) => i != action.featIndex);
-      return {
+      return initCharacter({
         ...state,
         feats: filteredFeats
-      };
+      });
 
     case 'UPDATE_CHARACTER_WEAPON':
       const newWeapon = initCharacterItem(action.weapon);
