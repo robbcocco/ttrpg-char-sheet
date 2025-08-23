@@ -50,12 +50,15 @@ export const CharacterSkillScore = ({
     return skill.proficient ? CharacterAbilityModifier(score) + Number(info.proficiencyBonus) : CharacterAbilityModifier(score);
 }
 
-export const CharacterSkillProficiencyAvailable = ({ skill, skillProficiencies}: {skill: CharacterSkill, skillProficiencies: CharacterSkillProficiency[]}): boolean => {
+export const CharacterSkillProficiencyAvailable = ({ skill, skillProficiencies}: {skill: CharacterSkill, skillProficiencies: CharacterSkillProficiency[]}): CharacterSkillProficiency | undefined => {
     for (const skillProficiency of skillProficiencies) {
-        if (!skill.proficient && typeof(skillProficiency) != 'string' && skillProficiency.from.map(f => f.toLowerCase()).includes(skill.name.toLowerCase()) && skillProficiency.count > 0) return true;
+        if (!skill.proficient &&
+            typeof(skillProficiency) != 'string' &&
+            skillProficiency.from.map(f => f.toLowerCase()).includes(skill.name.toLowerCase()) &&
+            skillProficiency.count > 0
+        )
+            return skillProficiency;
     }
-
-    return false;
 }
 
 export const loadSkills = (): (ICharacterSkill)[] => {

@@ -99,7 +99,7 @@ export default function AbilitySection({ abilityScore }: AbilitySectionProps) {
             {abilitySkills.map((skill) => {
               const skillAvailable = CharacterSkillProficiencyAvailable({ skill, skillProficiencies });
               return (
-                <div key={skill.name} className={`flex items-center justify-between ${skillAvailable ? 'bg-green-50' : 'bg-gray-50'} p-2 rounded`}>
+                <div key={skill.name} className={`flex items-center justify-between ${!!skillAvailable ? 'bg-green-50' : 'bg-gray-50'} p-2 rounded`}>
                   <div className="flex items-center space-x-2">
                     <input
                       type="checkbox"

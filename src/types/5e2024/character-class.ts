@@ -26,8 +26,8 @@ export const initCharacterClass = (characterClass: ICharacterClass | CharacterCl
             level: 1,
             healthDice: characterClass.hd.faces,
             proficiency: characterClass.proficiency,
-            startingProficiencies: initCharacterProficiency(characterClass.startingProficiencies),
-            multiclassProficiencies: initCharacterProficiency(characterClass.multiclassing.proficienciesGained),
+            startingProficiencies: initCharacterProficiency(characterClass.name, characterClass.startingProficiencies),
+            multiclassProficiencies: initCharacterProficiency(characterClass.name, characterClass.multiclassing.proficienciesGained),
             feats: initCharacterClassFeature(characterClass.classFeatures),
             spellcastingAbility: characterClass.spellcastingAbility as AbilityKey,
         }
@@ -56,6 +56,7 @@ export type CharacterProficiency = {
 export type CharacterSkillProficiency = string | {
     from: string[];
     count: number;
+    className: string;
 }
 
 export type CharacterClassFeature = CharacterFeat & {
@@ -82,26 +83,29 @@ export const sortCharacterSkillProficiencies = (proficiencies: CharacterSkillPro
     })
 }
 
-export const initCharacterProficiency = (proficiencies?: ICharacterProficiencies | CharacterProficiency): CharacterProficiency => {
+export const initCharacterProficiency = (className: string, proficiencies?: ICharacterProficiencies | CharacterProficiency): CharacterProficiency => {
     const skills: CharacterSkillProficiency[] = [];
 
     for (const skill of proficiencies?.skills ?? []) {
-        if (typeof (skill) == 'string' || 'from' in skill) {
+        if (typeof (skill) == 'string') {
             skills.push(skill);
+        } else if ('from' in skill) {
+            skills.push({ ...skill, className: className });
         } else if ('any' in skill) {
             skills.push({
                 from: loadSkills().map(s => s.name),
-                count: skill.any
+                count: skill.any,
+                className: className
             })
         } else if ('choose' in skill) {
-            skills.push(skill.choose);
+            skills.push({ ...skill.choose, className: className });
         }
     }
 
     return {
         weapons: proficiencies?.weapons || [],
         armor: proficiencies?.armor || [],
-        skills: skills
+        skills: sortCharacterSkillProficiencies(skills)
     }
 }
 
