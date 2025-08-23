@@ -1,11 +1,10 @@
 import { CharacterAbilityScore, AbilityKey, CharacterAbilityModifier, CharacterAbilitySavingThrow } from "@/types/5e2024/character-ability-score";
-import { CharacterSkillProficiencyAvailable, CharacterSkillScore } from "@/types/5e2024/character-skill";
+import { CharacterSkillProficiency, CharacterSkillProficiencyAvailable, CharacterSkillScore } from "@/types/5e2024/character-skill";
 import { useCharacterSkills, useCharacter, useCharacterInfo, useCharacterAbilityScores, characterActions } from '@/store/5e2024/character-store';
 import { formatModifier } from "@/utils";
 import DiceRoller from "../commons/dice-roller";
 import { CharacterProficiencies } from "@/types/5e2024/character";
 import { useEffect, useState } from "react";
-import { CharacterSkillProficiency } from "@/types/5e2024/character-class";
 
 interface AbilitySectionProps {
   abilityScore: CharacterAbilityScore;
@@ -40,7 +39,7 @@ export default function AbilitySection({ abilityScore }: AbilitySectionProps) {
   useEffect(() => {
     const characterProficiency = CharacterProficiencies(character);
     setSkillProficiencies(characterProficiency.skills);
-  }, [character, character.classes, character.skills]);
+  }, [character, character.classes, character.skills, character.background]);
 
   // Filter skills that belong to this ability
   const abilitySkills = skills.filter(skill => skill.ability === abilityScore.key);
@@ -81,6 +80,7 @@ export default function AbilitySection({ abilityScore }: AbilitySectionProps) {
           <div className="flex items-center space-x-2">
             <input
               type="checkbox"
+              disabled={true}
               checked={abilityScore.savingThrowProficient}
               onChange={() => onToggleSavingThrow(abilityScore.key)}
               className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
@@ -98,8 +98,9 @@ export default function AbilitySection({ abilityScore }: AbilitySectionProps) {
           <div className="space-y-1">
             {abilitySkills.map((skill) => {
               const skillAvailable = CharacterSkillProficiencyAvailable({ skill, skillProficiencies });
+              const bgColor = !!skillAvailable ? typeof(skillAvailable) == 'string' ? 'bg-blue-50' : 'bg-green-50' : 'bg-gray-50'
               return (
-                <div key={skill.name} className={`flex items-center justify-between ${!!skillAvailable ? 'bg-green-50' : 'bg-gray-50'} p-2 rounded`}>
+                <div key={skill.name} className={`flex items-center justify-between ${bgColor} p-2 rounded`}>
                   <div className="flex items-center space-x-2">
                     <input
                       type="checkbox"

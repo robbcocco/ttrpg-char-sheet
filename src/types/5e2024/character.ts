@@ -1,10 +1,10 @@
 import { reduceDices } from '@/utils/dice';
 import { AbilityName, AbilityKey, CharacterAbilityScore, initCharacterAbilityScore, CharacterAbilityModifier } from './character-ability-score';
 import { CharacterBackground } from './character-background';
-import { CharacterClass, CharacterClassFeature, CharacterClassUnlockedFeats, CharacterProficiency, CharacterSkillProficiency, sortCharacterSkillProficiencies } from './character-class';
+import { CharacterClass, CharacterClassFeature, CharacterClassUnlockedFeats, CharacterProficiency } from './character-class';
 import { CharacterEquip, initCharacterEquip } from './character-equip';
 import { CharacterInfo, initCharacterInfo } from './character-info';
-import { CharacterSkill, initCharacterSkill, loadSkills } from './character-skill';
+import { CharacterSkill, CharacterSkillProficiency, initCharacterSkill, loadSkills, sortCharacterSkillProficiencies } from './character-skill';
 import { CharacterSpell } from './character-spell';
 import { CharacterAction, initCharacterActions } from './character-actions';
 import { CharacterSubclassFeature } from './character-subclass';
@@ -39,7 +39,8 @@ export const initCharacter = (character?: Character): Character => {
         background: character?.background ?? undefined,
         feats: character?.feats ?? [],
         classes: character?.classes ?? [],
-        abilityScores: (character?.abilityScores?.length ?? 0) > 0 
+        abilityScores: // character?.abilityScores ?? abilities.map(ability => initCharacterAbilityScore(ability, proficiencies)),
+        (character?.abilityScores?.length ?? 0) > 0 
             ? character!.abilityScores.map(ability => {
                 return initCharacterAbilityScore(ability, proficiencies);
             })
@@ -47,7 +48,7 @@ export const initCharacter = (character?: Character): Character => {
                 return initCharacterAbilityScore(ability, proficiencies);
             }),
         actions: initCharacterActions(),
-        skills: character?.skills ?? loadSkills().map(skill => initCharacterSkill(skill, skills)),
+        skills: character?.skills.map(skill => initCharacterSkill(skill, skills)) ?? loadSkills().map(skill => initCharacterSkill(skill, skills)),
         spells: [],
         equip: initCharacterEquip()
     }
@@ -119,11 +120,12 @@ export const CharacterAbilityProficiencies = (character?: Character): AbilityKey
 export const CharacterProficiencies = (character?: Character): CharacterProficiency => {
     const [mainClass, ...multiClasses] = character?.classes ?? [];
     const characterSkills = character?.skills ?? [];
-    if (mainClass) {
-        let weapons: string[] = [];
-        let armor: string[] = [];
-        let skillProficiencies: CharacterSkillProficiency[] = [];
 
+    let weapons: string[] = [];
+    let armor: string[] = [];
+    let skillProficiencies: CharacterSkillProficiency[] = [];
+
+    if (mainClass) {
         weapons = [...new Set([...weapons, ...mainClass.startingProficiencies.weapons])];
         armor = [...new Set([...armor, ...mainClass.startingProficiencies.armor])];
         skillProficiencies = skillProficiencies.concat(mainClass.startingProficiencies.skills);
@@ -133,39 +135,41 @@ export const CharacterProficiencies = (character?: Character): CharacterProficie
             armor = [...new Set([...armor, ...mc.multiclassProficiencies.armor])];
             skillProficiencies = skillProficiencies.concat(mc.multiclassProficiencies.skills);
         }
+    }
 
-        const sortedSkills = sortCharacterSkillProficiencies(skillProficiencies);
-        for (const characterSkill of characterSkills) {
-            if (characterSkill.proficient) {
-                const skillProficiency = sortedSkills.find(skillProficiency =>
-                    typeof(skillProficiency) != 'string' &&
-                    skillProficiency.from.map(f => f.toLowerCase()).includes(characterSkill.name.toLowerCase()) &&
-                    (skillProficiency.used.includes(characterSkill.name) || skillProficiency.used.length < skillProficiency.count));
-                if (skillProficiency && typeof(skillProficiency) != 'string') {
-                    skillProficiency.used = [...new Set([characterSkill.name, ...skillProficiency.used])];
-                }
-            } else {
-                const skillProficiency = sortedSkills.find(skillProficiency =>
-                    typeof(skillProficiency) != 'string' &&
-                    skillProficiency.used.map(f => f.toLowerCase()).includes(characterSkill.name.toLowerCase()));
+    if (character?.background) {
+        skillProficiencies = skillProficiencies.concat(character.background.proficiencies);
+    }
+
+    skillProficiencies = sortCharacterSkillProficiencies(skillProficiencies);
+    for (const characterSkill of characterSkills) {
+        if (characterSkill.proficient) {
+            const skillProficiency = skillProficiencies.find(skillProficiency =>
+                (typeof(skillProficiency)  == 'string' && skillProficiency.toLowerCase() == characterSkill.name.toLowerCase()) ||
+                (typeof(skillProficiency)  != 'string' &&
+                skillProficiency.from.map(f => f.toLowerCase()).includes(characterSkill.name.toLowerCase()) &&
+                (skillProficiency.used.includes(characterSkill.name) || skillProficiency.used.length < skillProficiency.count))
+            );
+            if (skillProficiency && typeof(skillProficiency) != 'string') {
+                skillProficiency.used = [...new Set([characterSkill.name, ...skillProficiency.used])];
+            }
+        } else {
+            const skillProficienciesFiltered = skillProficiencies.filter(skillProficiency =>
+                typeof(skillProficiency) != 'string' &&
+                skillProficiency.used.map(f => f.toLowerCase()).includes(characterSkill.name.toLowerCase()));
+            for (const skillProficiency of skillProficienciesFiltered) {
                 if (skillProficiency && typeof(skillProficiency) != 'string') {
                     skillProficiency.used = skillProficiency.used.filter(use => use != characterSkill.name);
                 }
             }
         }
-
-        return {
-            weapons: weapons,
-            armor: armor,
-            skills: sortedSkills
-        };
-    } else {
-        return {
-            weapons: [],
-            armor: [],
-            skills: []
-        }
     }
+
+    return {
+        weapons: weapons,
+        armor: armor,
+        skills: skillProficiencies
+    };
 }
 
 export const CharacterFeats = (character?: Character): (CharacterClassFeature | CharacterSubclassFeature)[] => {

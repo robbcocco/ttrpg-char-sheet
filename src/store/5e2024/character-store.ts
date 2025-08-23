@@ -42,10 +42,10 @@ export function characterReducer(state: Character, action: CharacterAction): Cha
 
     case 'UPDATE_CHARACTER_BACKGROUND':
       const newBackground = initCharacterBackground(action.background as ICharacterBackground);
-      return {
+      return initCharacter({
         ...state,
         background: newBackground
-      };
+      });
 
     case 'ADD_CHARACTER_FEAT':
       if (action.featData) {
@@ -145,10 +145,10 @@ export function characterReducer(state: Character, action: CharacterAction): Cha
 
     case 'REMOVE_CHARACTER_CLASS':
       const filteredClasses = state.classes.filter((c, i) => i != action.classIndex);
-      return {
+      return initCharacter({
         ...state,
         classes: filteredClasses
-      };
+      });
 
     case 'ADD_SPELL':
       if (action.spellData) {

@@ -3,7 +3,7 @@ import index from '../../data/class/index.json';
 import { AbilityKey } from './character-ability-score';
 import { CharacterSubclass, CharacterSubclassFeature } from './character-subclass';
 import { CharacterFeat } from './character-feat';
-import { loadSkills } from './character-skill';
+import { CharacterSkillProficiency, loadSkills, sortCharacterSkillProficiencies } from './character-skill';
 
 export type CharacterClass = {
     name: string;
@@ -53,35 +53,9 @@ export type CharacterProficiency = {
     skills: CharacterSkillProficiency[]
 }
 
-export type CharacterSkillProficiency = string | {
-    from: string[];
-    count: number;
-    className: string;
-    used: string[];
-}
-
 export type CharacterClassFeature = CharacterFeat & {
     level: number,
     className: string,
-}
-
-export const sortCharacterSkillProficiencies = (proficiencies: CharacterSkillProficiency[]): CharacterSkillProficiency[] => {
-    return proficiencies.sort((a, b) => {
-        const isAString = typeof a === "string";
-        const isBString = typeof b === "string";
-
-        if (isAString && !isBString) return -1;
-        if (!isAString && isBString) return 1;
-
-        if (isAString && isBString) {
-            return (a as string).localeCompare(b as string);
-        }
-
-        const objA = a as { from: string[]; count: number };
-        const objB = b as { from: string[]; count: number };
-
-        return objB.count - objA.count;
-    })
 }
 
 export const initCharacterProficiency = (className: string, proficiencies?: ICharacterProficiencies | CharacterProficiency): CharacterProficiency => {
@@ -91,16 +65,16 @@ export const initCharacterProficiency = (className: string, proficiencies?: ICha
         if (typeof (skill) == 'string') {
             skills.push(skill);
         } else if ('from' in skill) {
-            skills.push({ ...skill, className: className, used: [] });
+            skills.push({ ...skill, origin: className, used: [] });
         } else if ('any' in skill) {
             skills.push({
                 from: loadSkills().map(s => s.name),
                 count: skill.any,
-                className: className,
+                origin: className,
                 used: [],
             })
         } else if ('choose' in skill) {
-            skills.push({ ...skill.choose, className: className, used: [] });
+            skills.push({ ...skill.choose, origin: className, used: [] });
         }
     }
 

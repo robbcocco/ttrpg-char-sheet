@@ -2,7 +2,6 @@ import { normalizeEntriesToText } from "@/utils/json";
 import { skill as skills } from '../../data/skills.json';
 import { AbilityKey, CharacterAbilityModifier, CharacterAbilityScore } from "./character-ability-score";
 import { CharacterInfo } from "./character-info";
-import { CharacterSkillProficiency } from "./character-class";
 
 export type CharacterSkill = {
     name: string;
@@ -12,6 +11,13 @@ export type CharacterSkill = {
     proficient: boolean;
 }
 
+export type CharacterSkillProficiency = string | {
+    from: string[];
+    count: number;
+    origin: string;
+    used: string[];
+}
+
 export const initCharacterSkill = (skill?: ICharacterSkill | CharacterSkill, skillProficiencies?: CharacterSkillProficiency[]): CharacterSkill => {
     if (skill && 'page' in skill) {
         return {
@@ -19,7 +25,7 @@ export const initCharacterSkill = (skill?: ICharacterSkill | CharacterSkill, ski
             source: skill.source,
             ability: skill.ability as AbilityKey,
             description: normalizeEntriesToText<ICharacterSkill['entries']>(skill.entries),
-            proficient: !!skillProficiencies?.filter(s => typeof(s) == 'string').find(s => skill.name.toLowerCase() == s.toLowerCase()),
+            proficient: skillProficiencies?.filter(s => typeof(s) == 'string').map(s => s.toLowerCase()).includes(skill.name.toLowerCase()) ?? false,
         }
     } else {
         return {
@@ -27,7 +33,10 @@ export const initCharacterSkill = (skill?: ICharacterSkill | CharacterSkill, ski
             source: skill?.source ?? '',
             description: skill?.description ?? '',
             ability: skill?.ability ?? 'str',
-            proficient: skill?.proficient ?? !!skillProficiencies?.filter(s => typeof(s) == 'string').find(s => skill?.name.toLowerCase() == s.toLowerCase())
+            proficient: //skill?.proficient ?? false
+                skill?.name
+                    ? skillProficiencies?.filter(s => typeof(s) == 'string').map(s => s.toLowerCase()).includes(skill?.name.toLowerCase()) ?? false
+                    : false
         }
     }
 }
@@ -51,12 +60,38 @@ export const CharacterSkillScore = ({
 }
 
 export const CharacterSkillProficiencyAvailable = ({ skill, skillProficiencies}: {skill: CharacterSkill, skillProficiencies: CharacterSkillProficiency[]}): CharacterSkillProficiency | undefined => {
-    const skillProficiency = skillProficiencies.find(skillProficiency =>
+    let skillProficiency: CharacterSkillProficiency | undefined;
+
+    skillProficiency = skillProficiencies.find(skillProficiency =>
+        typeof(skillProficiency) == 'string' &&
+        skillProficiency.toLowerCase() == skill.name.toLowerCase());
+    if (skillProficiency && !skill.proficient) return skillProficiency;
+
+    skillProficiency = skillProficiencies.find(skillProficiency =>
         typeof(skillProficiency) != 'string' &&
         skillProficiency.from.map(f => f.toLowerCase()).includes(skill.name.toLowerCase()) &&
         skillProficiency.count > skillProficiency.used.length
     );
-    if (!skill.proficient) return skillProficiency;
+    if (skillProficiency && !skill.proficient) return skillProficiency;
+}
+
+export const sortCharacterSkillProficiencies = (proficiencies: CharacterSkillProficiency[]): CharacterSkillProficiency[] => {
+    return proficiencies.sort((a, b) => {
+        const isAString = typeof a === "string";
+        const isBString = typeof b === "string";
+
+        if (isAString && !isBString) return -1;
+        if (!isAString && isBString) return 1;
+
+        if (isAString && isBString) {
+            return (a as string).localeCompare(b as string);
+        }
+
+        const objA = a as { from: string[]; count: number };
+        const objB = b as { from: string[]; count: number };
+
+        return objB.count - objA.count;
+    })
 }
 
 export const loadSkills = (): (ICharacterSkill)[] => {
