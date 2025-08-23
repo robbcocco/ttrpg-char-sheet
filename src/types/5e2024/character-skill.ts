@@ -51,14 +51,12 @@ export const CharacterSkillScore = ({
 }
 
 export const CharacterSkillProficiencyAvailable = ({ skill, skillProficiencies}: {skill: CharacterSkill, skillProficiencies: CharacterSkillProficiency[]}): CharacterSkillProficiency | undefined => {
-    for (const skillProficiency of skillProficiencies) {
-        if (!skill.proficient &&
-            typeof(skillProficiency) != 'string' &&
-            skillProficiency.from.map(f => f.toLowerCase()).includes(skill.name.toLowerCase()) &&
-            skillProficiency.count > 0
-        )
-            return skillProficiency;
-    }
+    const skillProficiency = skillProficiencies.find(skillProficiency =>
+        typeof(skillProficiency) != 'string' &&
+        skillProficiency.from.map(f => f.toLowerCase()).includes(skill.name.toLowerCase()) &&
+        skillProficiency.count > skillProficiency.used.length
+    );
+    if (!skill.proficient) return skillProficiency;
 }
 
 export const loadSkills = (): (ICharacterSkill)[] => {

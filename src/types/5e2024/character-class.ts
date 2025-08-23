@@ -57,6 +57,7 @@ export type CharacterSkillProficiency = string | {
     from: string[];
     count: number;
     className: string;
+    used: string[];
 }
 
 export type CharacterClassFeature = CharacterFeat & {
@@ -79,7 +80,7 @@ export const sortCharacterSkillProficiencies = (proficiencies: CharacterSkillPro
         const objA = a as { from: string[]; count: number };
         const objB = b as { from: string[]; count: number };
 
-        return objA.from.length - objB.from.length;
+        return objB.count - objA.count;
     })
 }
 
@@ -90,15 +91,16 @@ export const initCharacterProficiency = (className: string, proficiencies?: ICha
         if (typeof (skill) == 'string') {
             skills.push(skill);
         } else if ('from' in skill) {
-            skills.push({ ...skill, className: className });
+            skills.push({ ...skill, className: className, used: [] });
         } else if ('any' in skill) {
             skills.push({
                 from: loadSkills().map(s => s.name),
                 count: skill.any,
-                className: className
+                className: className,
+                used: [],
             })
         } else if ('choose' in skill) {
-            skills.push({ ...skill.choose, className: className });
+            skills.push({ ...skill.choose, className: className, used: [] });
         }
     }
 

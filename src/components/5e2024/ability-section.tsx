@@ -40,7 +40,7 @@ export default function AbilitySection({ abilityScore }: AbilitySectionProps) {
   useEffect(() => {
     const characterProficiency = CharacterProficiencies(character);
     setSkillProficiencies(characterProficiency.skills);
-  }, [character, character.classes]);
+  }, [character, character.classes, character.skills]);
 
   // Filter skills that belong to this ability
   const abilitySkills = skills.filter(skill => skill.ability === abilityScore.key);

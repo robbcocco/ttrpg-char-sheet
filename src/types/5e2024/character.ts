@@ -47,7 +47,7 @@ export const initCharacter = (character?: Character): Character => {
                 return initCharacterAbilityScore(ability, proficiencies);
             }),
         actions: initCharacterActions(),
-        skills: loadSkills().map(skill => initCharacterSkill(skill, skills)),
+        skills: character?.skills ?? loadSkills().map(skill => initCharacterSkill(skill, skills)),
         spells: [],
         equip: initCharacterEquip()
     }
@@ -118,6 +118,7 @@ export const CharacterAbilityProficiencies = (character?: Character): AbilityKey
 
 export const CharacterProficiencies = (character?: Character): CharacterProficiency => {
     const [mainClass, ...multiClasses] = character?.classes ?? [];
+    const characterSkills = character?.skills ?? [];
     if (mainClass) {
         let weapons: string[] = [];
         let armor: string[] = [];
@@ -133,10 +134,30 @@ export const CharacterProficiencies = (character?: Character): CharacterProficie
             skillProficiencies = skillProficiencies.concat(mc.multiclassProficiencies.skills);
         }
 
+        const sortedSkills = sortCharacterSkillProficiencies(skillProficiencies);
+        for (const characterSkill of characterSkills) {
+            if (characterSkill.proficient) {
+                const skillProficiency = sortedSkills.find(skillProficiency =>
+                    typeof(skillProficiency) != 'string' &&
+                    skillProficiency.from.map(f => f.toLowerCase()).includes(characterSkill.name.toLowerCase()) &&
+                    (skillProficiency.used.includes(characterSkill.name) || skillProficiency.used.length < skillProficiency.count));
+                if (skillProficiency && typeof(skillProficiency) != 'string') {
+                    skillProficiency.used = [...new Set([characterSkill.name, ...skillProficiency.used])];
+                }
+            } else {
+                const skillProficiency = sortedSkills.find(skillProficiency =>
+                    typeof(skillProficiency) != 'string' &&
+                    skillProficiency.used.map(f => f.toLowerCase()).includes(characterSkill.name.toLowerCase()));
+                if (skillProficiency && typeof(skillProficiency) != 'string') {
+                    skillProficiency.used = skillProficiency.used.filter(use => use != characterSkill.name);
+                }
+            }
+        }
+
         return {
             weapons: weapons,
             armor: armor,
-            skills: sortCharacterSkillProficiencies(skillProficiencies)
+            skills: sortedSkills
         };
     } else {
         return {
