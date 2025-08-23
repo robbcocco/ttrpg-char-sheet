@@ -55,8 +55,9 @@ export const CharacterSkillProficiencyAvailable = ({ skill, skillProficiencies}:
         if (!skill.proficient &&
             typeof(skillProficiency) != 'string' &&
             skillProficiency.from.map(f => f.toLowerCase()).includes(skill.name.toLowerCase()) &&
-            skillProficiency.count > 0
+            skillProficiency.count > skillProficiency.used.length
         )
+        console.log(skillProficiency.used.length);
             return skillProficiency;
     }
 }

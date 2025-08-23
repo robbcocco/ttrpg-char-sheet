@@ -47,7 +47,7 @@ export const initCharacter = (character?: Character): Character => {
                 return initCharacterAbilityScore(ability, proficiencies);
             }),
         actions: initCharacterActions(),
-        skills: loadSkills().map(skill => initCharacterSkill(skill, skills)),
+        skills: character?.skills ?? loadSkills().map(skill => initCharacterSkill(skill, skills)),
         spells: [],
         equip: initCharacterEquip()
     }

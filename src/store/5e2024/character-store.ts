@@ -1,8 +1,8 @@
 'use client';
 
 import React, { createContext, useContext, useReducer, ReactNode } from 'react';
-import { Character, initCharacter } from '@/types/5e2024/character';
-import { initCharacterClass, ICharacterClass } from '@/types/5e2024/character-class';
+import { Character, CharacterProficiencies, initCharacter } from '@/types/5e2024/character';
+import { initCharacterClass, ICharacterClass, CharacterClass } from '@/types/5e2024/character-class';
 import { ICharacterSubclass, initCharacterSubclass } from '@/types/5e2024/character-subclass';
 import { initCharacterSpell, ICharacterSpell } from '@/types/5e2024/character-spell';
 import { AbilityKey } from '@/types/5e2024/character-ability-score';
@@ -10,6 +10,7 @@ import { initCharacterBackground, ICharacterBackground } from '@/types/5e2024/ch
 import { initCharacterItem, ICharacterArmor, ICharacterWeapon, ICharacterShield, CharacterItem } from '@/types/5e2024/character-equip';
 import { initCharacterActions } from '@/types/5e2024/character-actions';
 import { ICharacterFeat, initCharacterFeat } from '@/types/5e2024/character-feat';
+import { CharacterSkillProficiencyAvailable } from '@/types/5e2024/character-skill';
 
 // Action types
 export type CharacterAction =
@@ -178,6 +179,40 @@ export function characterReducer(state: Character, action: CharacterAction): Cha
       };
 
     case 'TOGGLE_SKILL_PROFICIENCY':
+      const newClassesWithProficiencies = state.classes;
+      const newSkill = state.skills.find(skill => skill.name === action.skillName);
+      if (newSkill) {
+              console.log('minca1')
+        const characterProficiencies = CharacterProficiencies(state);
+        const proficiencyAvailable = CharacterSkillProficiencyAvailable({skill: newSkill, skillProficiencies: characterProficiencies.skills});
+        if (proficiencyAvailable && typeof(proficiencyAvailable) !== 'string') {
+              console.log('minca2')
+          const classWithProficiency = state.classes.find(cc => cc.name == proficiencyAvailable.className);
+          if (classWithProficiency) {
+              console.log('minca3')
+            const classWithProficiencyIndex = state.classes.indexOf(classWithProficiency);
+            const startingProficiencySkills = classWithProficiency.startingProficiencies.skills;
+            const multiclassingProficiencySkills = classWithProficiency.multiclassProficiencies.skills;
+
+            const oldStartingProficiencyIndex = startingProficiencySkills.indexOf(proficiencyAvailable);
+            const oldMulticlassingProficiencyIndex = multiclassingProficiencySkills.indexOf(proficiencyAvailable);
+            let newUsedSkills: string[] = []
+            if (oldStartingProficiencyIndex >= 0) {
+              console.log('minca4')
+              if (!newSkill.proficient) {
+                newUsedSkills = [...new Set([...proficiencyAvailable.used, newSkill.name])];
+              } else {
+                newUsedSkills = proficiencyAvailable.used.filter(sk => sk !== newSkill.name);
+              }
+              startingProficiencySkills[oldStartingProficiencyIndex] = { ...proficiencyAvailable, used: newUsedSkills }
+            } else if (oldMulticlassingProficiencyIndex >= 0) {
+              console.log('minca5')
+              multiclassingProficiencySkills[oldMulticlassingProficiencyIndex] = { ...proficiencyAvailable, used: newUsedSkills }
+            }
+            newClassesWithProficiencies[classWithProficiencyIndex] = initCharacterClass(classWithProficiency);
+          }
+        }
+      }
       const newSkills = state.skills.map(skill => {
         if (skill.name === action.skillName) {
           return {
@@ -187,11 +222,15 @@ export function characterReducer(state: Character, action: CharacterAction): Cha
         }
         return skill;
       });
-
-      return {
+      return initCharacter({
         ...state,
-        skills: newSkills
-      };
+        skills: newSkills,
+        classes: newClassesWithProficiencies
+      });
+      // return {
+      //   ...state,
+      //   skills: newSkills
+      // };
 
     case 'TOGGLE_SAVING_THROW_PROFICIENCY':
       const newAbilityScoresForSaving = state.abilityScores.map(abilityScore => {
