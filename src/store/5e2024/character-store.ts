@@ -7,7 +7,7 @@ import { ICharacterSubclass, initCharacterSubclass } from '@/types/5e2024/charac
 import { initCharacterSpell, ICharacterSpell } from '@/types/5e2024/character-spell';
 import { AbilityKey } from '@/types/5e2024/character-ability-score';
 import { initCharacterBackground, ICharacterBackground } from '@/types/5e2024/character-background';
-import { initCharacterItem, ICharacterArmor, ICharacterWeapon, ICharacterShield, CharacterItem } from '@/types/5e2024/character-equip';
+import { initCharacterItem, ICharacterArmor, ICharacterWeapon, ICharacterShield } from '@/types/5e2024/character-equip';
 import { initCharacterActions } from '@/types/5e2024/character-actions';
 import { ICharacterFeat, initCharacterFeat } from '@/types/5e2024/character-feat';
 
@@ -23,6 +23,8 @@ export type CharacterAction =
   | { type: 'ADD_CHARACTER_CLASS'; classData?: ICharacterClass }
   | { type: 'UPDATE_CLASS_LEVEL'; className: string; level: number }
   | { type: 'UPDATE_CLASS_SUBCLASS'; className: string, subclass?: ICharacterSubclass }
+  | { type: 'ADD_CLASS_SPELL'; classIndex: number, spellData: ICharacterSpell }
+  | { type: 'REMOVE_CLASS_SPELL'; classIndex: number, spellIndex: number }
   | { type: 'REMOVE_CHARACTER_CLASS'; classIndex: number }
   | { type: 'ADD_SPELL'; spellData: ICharacterSpell }
   | { type: 'REMOVE_SPELL'; spellIndex: number }
@@ -141,6 +143,29 @@ export function characterReducer(state: Character, action: CharacterAction): Cha
       return {
         ...state,
         classes: classesWithSubclass
+      };
+
+    case 'ADD_CLASS_SPELL':
+      const classesToUpdateSpell = [...state.classes];
+      if (action.spellData) {
+        const newSpell = initCharacterSpell(action.spellData);
+        const classToAddSpellTo = state.classes[action.classIndex];
+        if (newSpell && classToAddSpellTo) {
+          classesToUpdateSpell[action.classIndex] = initCharacterClass({ ...classToAddSpellTo, spells: [...classToAddSpellTo.spells, newSpell] });
+          return {
+            ...state,
+            classes: classesToUpdateSpell
+          };
+        }
+      }
+      return state;
+
+    case 'REMOVE_CLASS_SPELL':
+      const classesToRemoveSpell = [...state.classes];
+      classesToRemoveSpell[action.classIndex].spells = classesToRemoveSpell[action.classIndex].spells.filter((_, index) => index !== action.spellIndex)
+      return {
+        ...state,
+        classes: classesToRemoveSpell
       };
 
     case 'REMOVE_CHARACTER_CLASS':
@@ -340,6 +365,18 @@ export const characterActions = {
     type: 'UPDATE_CLASS_SUBCLASS',
     className,
     subclass
+  }),
+
+  addClassSpell: (classIndex: number, spellData: ICharacterSpell): CharacterAction => ({
+    type: 'ADD_CLASS_SPELL',
+    classIndex,
+    spellData
+  }),
+
+  removeClassSpell: (classIndex: number, spellIndex: number): CharacterAction => ({
+    type: 'REMOVE_CLASS_SPELL',
+    classIndex,
+    spellIndex
   }),
 
   removeCharacterClass: (classIndex: number): CharacterAction => ({

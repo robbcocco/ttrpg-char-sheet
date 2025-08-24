@@ -1,5 +1,5 @@
 import { useCharacter } from "@/store/5e2024/character-store";
-import { CharacterArmorClass, CharacterHitPoints, CharacterInitiative } from "@/types/5e2024/character";
+import { CharacterArmorClass, CharacterHitPoints, CharacterInitiative, CharacterSpells } from "@/types/5e2024/character";
 import { formatModifier } from "@/utils";
 import DiceRoller from "../commons/dice-roller";
 import { formatDice } from "@/utils/dice";
@@ -54,11 +54,11 @@ export default function CombatSection() {
       </div>
 
       {/* Spells */}
-      {character.spells.length > 0 && (
+      {CharacterSpells(character).length > 0 && (
         <div>
           <h4 className="text-sm font-semibold text-gray-700 mb-2">Spells</h4>
           <div className="space-y-1">
-            {character.spells.map((spell, index) => (
+            {CharacterSpells(character).map((spell, index) => (
               <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded">
                 <div className="flex items-center space-x-2">
                   <span className="text-sm">{spell.name}</span>

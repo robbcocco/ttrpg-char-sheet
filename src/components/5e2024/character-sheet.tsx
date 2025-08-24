@@ -7,6 +7,7 @@ import SpellsSection from './spells-section';
 import AbilitySection from './ability-section';
 import EquipSection from './equip-section';
 import FeatsSection from './feats-section';
+import ClassSpellsSection from './class-spells-section';
 
 export default function CharacterSheet() {
   const { character } = useCharacter();
@@ -36,8 +37,15 @@ export default function CharacterSheet() {
           </div>
 
           <div className="lg:col-span-8">
-            {!!character.classes.find(cc => cc.spellcastingAbility) && <SpellsSection />}
+            {character.spells.length > 0 && <SpellsSection />}
           </div>
+          {character.classes.map((characterClass, index) => (
+            <div key={index} className="lg:col-span-4">
+              <ClassSpellsSection
+                index={index}
+              />
+            </div>
+          ))}
 
           <div className="grid grid-cols-2 lg:grid-cols-6 lg:col-span-12 gap-6">
             {character.abilityScores.map((abilityScore) => (

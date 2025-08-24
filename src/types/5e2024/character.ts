@@ -178,6 +178,16 @@ export const CharacterProficiencies = (character?: Character): CharacterProficie
     };
 }
 
+export const CharacterSpells = (character?: Character): CharacterSpell[] => {
+    let spells: CharacterSpell[] = character?.spells ?? [];
+
+    for (const characterClass of character?.classes ?? []) {
+        spells = spells.concat(characterClass?.spells);
+    }
+
+    return spells;
+}
+
 export const CharacterFeats = (character?: Character): (CharacterClassFeature | CharacterSubclassFeature)[] => {
     let feats: (CharacterClassFeature | CharacterSubclassFeature)[] = [];
 

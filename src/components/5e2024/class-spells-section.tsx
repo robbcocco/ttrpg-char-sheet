@@ -2,40 +2,41 @@ import { characterActions, useCharacter, useCharacterClasses, useCharacterSpells
 import { ICharacterSpell, loadSpells } from "@/types/5e2024/character-spell";
 import { useEffect, useState } from "react";
 
-export default function SpellsSection() {
+interface ClassSpellsProps {
+  index: number;
+}
+
+export default function ClassSpellsSection({ index }: ClassSpellsProps) {
   const characterClasses = useCharacterClasses();
-  const characterSpells = useCharacterSpells();
   const { dispatch } = useCharacter();
   const [availableSpells, setAvailableSpells] = useState<ICharacterSpell[]>([]);
 
   const onAddSpell = (spellData: ICharacterSpell) => {
-    dispatch(characterActions.addSpell(spellData));
+    dispatch(characterActions.addClassSpell(index, spellData));
   };
 
   const onRemoveSpell = (spellIndex: number) => {
-    dispatch(characterActions.removeSpell(spellIndex));
+    dispatch(characterActions.removeClassSpell(index, spellIndex));
   };
 
   useEffect(() => {
-    loadSpells(characterClasses).then(setAvailableSpells);
-  }, [characterClasses]);
+    loadSpells([characterClasses[index]]).then(setAvailableSpells);
+  }, [characterClasses, index]);
 
   return (
     <div className="bg-white rounded-lg shadow-md p-6">
-      <h2 className="text-xl font-semibold mb-4">Spells</h2>
+      <h2 className="text-xl font-semibold mb-4">{`${characterClasses[index].name}'s Spells`}</h2>
 
       {/* Spellcasting Info */}
       <div className="mb-4 p-3 bg-gray-50 rounded-md">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {characterClasses.map((characterClass, index) => (
-            characterClass.spellcastingAbility && (
-              <div key={index}>
-                <span className="text-sm font-medium text-gray-700">
-                  {characterClass.name}: {characterClass.spellcastingAbility.toUpperCase()}
-                </span>
-              </div>
-            )
-          ))}
+          {characterClasses[index].spellcastingAbility && (
+            <div key={index}>
+              <span className="text-sm font-medium text-gray-700">
+                {characterClasses[index].spellcastingAbility.toUpperCase()}
+              </span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -67,10 +68,10 @@ export default function SpellsSection() {
 
       {/* Current Spells */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {characterSpells.length === 0 ? (
+        {characterClasses[index].spells.length === 0 ? (
           <p className="text-gray-500 col-span-2">No spells selected</p>
         ) : (
-          characterSpells.map((spell, index) => (
+          characterClasses[index].spells.map((spell, index) => (
             <div key={index} className="border border-gray-200 rounded-md p-3">
               <div className="flex justify-between items-start mb-2">
                 <h3 className="font-medium">{spell.name}</h3>

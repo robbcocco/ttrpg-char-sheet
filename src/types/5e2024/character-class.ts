@@ -4,6 +4,7 @@ import { AbilityKey } from './character-ability-score';
 import { CharacterSubclass, CharacterSubclassFeature } from './character-subclass';
 import { CharacterFeat } from './character-feat';
 import { CharacterSkillProficiency, loadSkills, sortCharacterSkillProficiencies } from './character-skill';
+import { CharacterSpell } from './character-spell';
 
 export type CharacterClass = {
     name: string;
@@ -15,7 +16,8 @@ export type CharacterClass = {
     multiclassProficiencies: CharacterProficiency;
     feats: CharacterClassFeature[];
     spellcastingAbility?: AbilityKey;
-    spellProgression?: number[][]
+    spellProgression?: number[][];
+    spells: CharacterSpell[];
     subclass?: CharacterSubclass;
 }
 
@@ -31,7 +33,8 @@ export const initCharacterClass = (characterClass: ICharacterClass | CharacterCl
             multiclassProficiencies: initCharacterProficiency(characterClass.name, characterClass.multiclassing.proficienciesGained),
             feats: initCharacterClassFeature(characterClass.classFeatures),
             spellcastingAbility: characterClass.spellcastingAbility as AbilityKey,
-            spellProgression: initCharacterClassSpellProgression(characterClass.classTableGroups)
+            spellProgression: initCharacterClassSpellProgression(characterClass.classTableGroups),
+            spells: []
         }
     } else {
         return {
@@ -46,6 +49,7 @@ export const initCharacterClass = (characterClass: ICharacterClass | CharacterCl
             spellcastingAbility: characterClass.spellcastingAbility,
             spellProgression: characterClass.spellProgression,
             subclass: characterClass.subclass,
+            spells: characterClass.spells
         }
     }
 }
