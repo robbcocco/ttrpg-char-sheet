@@ -15,6 +15,7 @@ export type CharacterClass = {
     multiclassProficiencies: CharacterProficiency;
     feats: CharacterClassFeature[];
     spellcastingAbility?: AbilityKey;
+    spellProgression?: number[][]
     subclass?: CharacterSubclass;
 }
 
@@ -30,6 +31,7 @@ export const initCharacterClass = (characterClass: ICharacterClass | CharacterCl
             multiclassProficiencies: initCharacterProficiency(characterClass.name, characterClass.multiclassing.proficienciesGained),
             feats: initCharacterClassFeature(characterClass.classFeatures),
             spellcastingAbility: characterClass.spellcastingAbility as AbilityKey,
+            spellProgression: initCharacterClassSpellProgression(characterClass.classTableGroups)
         }
     } else {
         return {
@@ -42,7 +44,8 @@ export const initCharacterClass = (characterClass: ICharacterClass | CharacterCl
             multiclassProficiencies: characterClass.multiclassProficiencies,
             feats: characterClass.feats,
             spellcastingAbility: characterClass.spellcastingAbility,
-            subclass: characterClass.subclass
+            spellProgression: characterClass.spellProgression,
+            subclass: characterClass.subclass,
         }
     }
 }
@@ -101,12 +104,34 @@ export const initCharacterClassFeature = (feats?: (string | CharacterClassFeatur
     return newFeats;
 }
 
+export const initCharacterClassSpellProgression = (classTableGroup: Record<string, unknown>[]): undefined | number[][] => {
+    for (const classTable of classTableGroup) {
+        if ('rowsSpellProgression' in classTable) {
+            const spellProgression = classTable['rowsSpellProgression'];
+            if (Array.isArray(spellProgression) && spellProgression?.length > 0) return spellProgression;
+        }
+    }
+}
+
 export const CharacterClassUnlockedFeats = (characterClass: CharacterClass): (CharacterClassFeature | CharacterSubclassFeature)[] => {
     let feats: (CharacterClassFeature | CharacterSubclassFeature)[] = [];
     feats = feats.concat(characterClass.feats);
     if (characterClass.subclass) feats = feats.concat(characterClass.subclass.feats);
 
     return feats.filter((feat) => feat && feat.level && characterClass.level >= feat.level).sort((a, b) => a.level - b.level);
+}
+
+export const CharacterClassMaxSpellLevel = (characterClass: CharacterClass): number => {
+    if (characterClass.spellcastingAbility && characterClass.spellProgression && characterClass.spellProgression?.length >= characterClass.level) {
+        const rowSpellProgression = characterClass.spellProgression[characterClass.level];
+        for (let i = 0; i < rowSpellProgression.length; i++) {
+            const element = rowSpellProgression[i];
+            if (element == 0) {
+                return i;
+            }
+        }
+    }
+    return -1;
 }
 
 export const parseClassFeature = (feature: string | CharacterClassFeature, classFeatures: ICharacterClassFeature[]): CharacterClassFeature => {
@@ -119,6 +144,7 @@ export const parseClassFeature = (feature: string | CharacterClassFeature, class
             source: source.trim(),
             className: className.trim(),
             level: Number(level.trim()),
+            proficiencies: [],
             description: classFeature ? normalizeEntriesToText(classFeature.entries) : ''
         }
     } else {
@@ -181,6 +207,7 @@ export interface ICharacterClass {
     multiclassing: {
         proficienciesGained: ICharacterProficiencies
     };
+    classTableGroups: Record<string, (number[][] | unknown)>[];
     featProgression?: undefined;
     classFeatures?: (string | {
         classFeature: string,

@@ -1,5 +1,7 @@
 import { normalizeEntriesToText } from '@/utils/json';
 import index from '../../data/spells/index.json';
+import sources from '../../data/spells/sources.json';
+import { CharacterClass, CharacterClassMaxSpellLevel } from './character-class';
 
 export type CharacterSpell = {
     name: string;
@@ -75,7 +77,7 @@ export const initCharacterSpell = (spell?: ICharacterSpell | CharacterSpell): Ch
     }
 }
 
-export const loadSpells = async (): Promise<ICharacterSpell[]> => {
+export const loadSpells = async (characterClasses: CharacterClass[]): Promise<ICharacterSpell[]> => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const spells: any[] = [];
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -84,7 +86,25 @@ export const loadSpells = async (): Promise<ICharacterSpell[]> => {
         spells.push(temp.spell);
     }
 
-    return spells.flat();
+    if (characterClasses.length == 0) return spells.flat();
+
+    return spells.flat().filter(spell => spell.source in sources && spell.name in (sources as ICharacterSpellSource)[spell.source] &&
+        characterClasses.find(cc => CharacterClassMaxSpellLevel(cc) >= spell.level && (sources as ICharacterSpellSource)[spell.source][spell.name].class?.find(sc => sc.name.toLowerCase() == cc.name.toLowerCase())));
+}
+
+export type ICharacterSpellSource = {
+    [x: string]: {
+        [y: string]: {
+            class?: {
+                name: string,
+                source: string,
+            }[],
+            classVariant?: {
+                name: string,
+                source: string,
+            }[]
+        }
+    }
 }
 
 export interface ICharacterSpell {

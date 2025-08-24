@@ -62,6 +62,7 @@ export const parseSubclassFeature = (feature: string | CharacterSubclassFeature,
             className: className.trim(),
             classSource: classSource.trim(),
             level: Number(level.trim()),
+            proficiencies: [],
             description: classFeature ? normalizeEntriesToText(classFeature.entries) : ''
         }
     } else {

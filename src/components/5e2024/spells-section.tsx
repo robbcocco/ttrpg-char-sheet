@@ -17,8 +17,8 @@ export default function SpellsSection() {
   };
 
   useEffect(() => {
-    loadSpells().then(setAvailableSpells);
-  }, []);
+    loadSpells(characterClasses).then(setAvailableSpells);
+  }, [characterClasses]);
 
   return (
     <div className="bg-white rounded-lg shadow-md p-6">

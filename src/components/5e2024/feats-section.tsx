@@ -62,13 +62,13 @@ export default function FeatsSection() {
             <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded">
               <div className="flex items-center space-x-2">
                 <span className="text-sm">{feat.name}</span>
-                <button
-                    onClick={() => onRemoveFeature(index)}
-                    className="text-red-600 hover:text-red-800 text-xs"
-                >
-                    X
-                </button>
               </div>
+              <button
+                  onClick={() => onRemoveFeature(index)}
+                  className="text-red-600 hover:text-red-800 text-xs"
+              >
+                  X
+              </button>
             </div>
           )
         })}
